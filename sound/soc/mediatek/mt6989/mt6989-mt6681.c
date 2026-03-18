@@ -40,7 +40,13 @@ static const char *const mt6989_spk_type_str[] = {MTK_SPK_NOT_SMARTPA_STR,
 						  MTK_SPK_RICHTEK_RT5509_STR,
 						  MTK_SPK_MEDIATEK_MT6660_STR,
 						  MTK_SPK_RICHTEK_RT5512_STR,
-						  MTK_SPK_GOODIX_TFA98XX_STR};
+						  MTK_SPK_GOODIX_TFA98XX_STR
+						  //drv add by pzp, support aw883xx, start
+						  #if IS_ENABLED(CONFIG_SND_SOC_AW8839X)
+						  ,MTK_SPK_AWINIC_AW883XX_STR
+						  #endif
+						  //drv add by pzp, support aw883xx, end
+						  };
 static const char *const
 	mt6989_spk_i2s_type_str[] = {MTK_SPK_I2S_0_STR,
 				     MTK_SPK_I2S_1_STR,
@@ -826,7 +832,18 @@ SND_SOC_DAILINK_DEFS(ap_dmic_ch34,
 	DAILINK_COMP_ARRAY(COMP_EMPTY()));
 SND_SOC_DAILINK_DEFS(i2sin0,
 	DAILINK_COMP_ARRAY(COMP_CPU("I2SIN0")),
+	//drv add by pzp, support aw883xx, start
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X)
+  #if IS_ENABLED(CONFIG_SND_SOC_AW8839X_STEREO)
+	DAILINK_COMP_ARRAY(COMP_CODEC("aw883xx_smartpa_0", "aw883xx-aif-0"),
+					   COMP_CODEC("aw883xx_smartpa_1", "aw883xx-aif-1")),
+  #else
+	DAILINK_COMP_ARRAY(COMP_CODEC("aw883xx_smartpa_0", "aw883xx-aif-0")),
+  #endif
+#else
 	DAILINK_COMP_ARRAY(COMP_DUMMY()),
+#endif
+	//drv add by pzp, support aw883xx, end
 	DAILINK_COMP_ARRAY(COMP_EMPTY()));
 SND_SOC_DAILINK_DEFS(i2sin1,
 	DAILINK_COMP_ARRAY(COMP_CPU("I2SIN1")),
@@ -846,7 +863,18 @@ SND_SOC_DAILINK_DEFS(i2sin6,
 	DAILINK_COMP_ARRAY(COMP_EMPTY()));
 SND_SOC_DAILINK_DEFS(i2sout0,
 	DAILINK_COMP_ARRAY(COMP_CPU("I2SOUT0")),
+	//drv add by pzp, support aw883xx, start
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X)
+  #if IS_ENABLED(CONFIG_SND_SOC_AW8839X_STEREO)
+	DAILINK_COMP_ARRAY(COMP_CODEC("aw883xx_smartpa_0", "aw883xx-aif-0"),
+					   COMP_CODEC("aw883xx_smartpa_1", "aw883xx-aif-1")),
+  #else
+	DAILINK_COMP_ARRAY(COMP_CODEC("aw883xx_smartpa_0", "aw883xx-aif-0")),
+  #endif
+#else
 	DAILINK_COMP_ARRAY(COMP_DUMMY()),
+#endif
+	//drv add by pzp, support aw883xx, end
 	DAILINK_COMP_ARRAY(COMP_EMPTY()));
 SND_SOC_DAILINK_DEFS(i2sout1,
 	DAILINK_COMP_ARRAY(COMP_CPU("I2SOUT1")),

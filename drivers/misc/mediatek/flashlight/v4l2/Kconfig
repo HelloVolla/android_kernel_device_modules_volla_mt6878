@@ -36,3 +36,30 @@ config MTK_VIDEO_SY7806
 	  Say Y here if you want a flashlight driver IC SY7806.
 	  Select this only if your board has this IC.
 	  Say M here if you want to compile this driver as a module.
+
+config MTK_VIDEO_OCP81378
+	tristate "OCP81378 dual flash driver support"
+	depends on I2C && VIDEO_DEV && MEDIA_CONTROLLER
+	depends on MEDIA_CAMERA_SUPPORT
+	select REGMAP_I2C
+	help
+	  This is a driver for the ocp81378 dual flash controllers. It controls
+	  flash, torch LEDs.
+
+	  Say Y here if you want a flashlight driver IC OCP81378.
+	  Select this only if your board has this IC.
+	  Say M here if you want to compile this driver as a module.
+	  
+	  
+config MTK_VIDEO_AW3641E
+	tristate "AW3641E dual flash driver support"
+	depends on I2C && VIDEO_DEV && MEDIA_CONTROLLER
+	depends on MEDIA_CAMERA_SUPPORT
+	select REGMAP_I2C
+	help
+	  This is a driver for the AW3641E dual flash controllers. It controls
+	  flash, torch LEDs.
+
+	  Say Y here if you want a flashlight driver IC AW3641E.
+	  Select this only if your board has this IC.
+	  Say M here if you want to compile this driver as a module.	  

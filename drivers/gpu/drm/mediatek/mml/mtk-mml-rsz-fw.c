@@ -440,7 +440,7 @@ static void rsz_auto_coef_trunc(struct rsz_fw_in *in, struct rsz_fw_out *out,
 			cal_param->vert_luma_cubic_trunc_bit = 7;
 			cal_param->vert_chroma_cubic_trunc_bit = 5;
 		} else if (vert_ratio >= 32 && vert_ratio <= 64) {
-			out->vert_cubic_trunc = 0;
+			out->vert_algo = 1;
 		}
 	}
 }

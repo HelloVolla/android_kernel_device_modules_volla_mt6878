@@ -173,11 +173,6 @@ void mtk_dmdp_aal_bypass_flag(struct mtk_ddp_comp *comp, int bypass)
 {
 	struct mtk_dmdp_aal *data = comp_to_dmdp_aal(comp);
 
-	if (data == NULL) {
-		DDPPR_ERR("%s: data null pointer\n", __func__);
-		return;
-	}
-
 	DDPINFO("%s : bypass = %d\n", __func__, bypass);
 
 	atomic_set(&data->primary_data->force_relay, bypass);

@@ -1499,6 +1499,8 @@ static struct regname rn[] = {
 	REGNAME(afe, 0x8, AUDIO_TOP_2),
 	REGNAME(afe, 0xC, AUDIO_TOP_3),
 	REGNAME(afe, 0x10, AUDIO_TOP_4),
+	/* IMP_IIC_WRAP_C register */
+	REGNAME(impc, 0xE00, AP_CLOCK_CG),
 	/* UFSCFG_AO_BUS register */
 	REGNAME(ufscfg_ao_bus, 0x50, UFS_AO2FE_SLPPROT_EN),
 	REGNAME(ufscfg_ao_bus, 0x5c, UFS_AO2FE_SLPPROT_RDY_STA),
@@ -1508,6 +1510,14 @@ static struct regname rn[] = {
 	REGNAME(ufscfg_pdn, 0x4, UFS_PDN_CG_0),
 	/* PEXTPCFG_AO register */
 	REGNAME(pextpcfg_ao, 0x14, PEXTP_CG_0),
+	/* IMP_IIC_WRAP_EN register */
+	REGNAME(impen, 0xE00, AP_CLOCK_CG),
+	/* IMP_IIC_WRAP_ES register */
+	REGNAME(impes, 0xE00, AP_CLOCK_CG),
+	/* IMP_IIC_WRAP_S register */
+	REGNAME(imps, 0xE00, AP_CLOCK_CG),
+	/* IMP_IIC_WRAP_N register */
+	REGNAME(impn, 0xE00, AP_CLOCK_CG),
 	/* GPU_EB_RPC register */
 	REGNAME(gpu_eb_rpc, 0x70, MFG_GPU_EB_CLONED_SC_MFG1_PWR_CON),
 	REGNAME(gpu_eb_rpc, 0xFC0, XPU_PWR_STATUS),
@@ -1569,6 +1579,13 @@ static struct regname rn[] = {
 	/* VDEC_SOC_GCON_BASE register */
 	REGNAME(vde1, 0x200, LAT_CKEN),
 	REGNAME(vde1, 0x0, VDEC_CKEN),
+	/* VDEC_GCON_BASE register */
+	REGNAME(vde2, 0x200, LAT_CKEN),
+	REGNAME(vde2, 0x0, VDEC_CKEN),
+	/* VENC_GCON register */
+	REGNAME(ven1, 0x0, VENCSYS_CG),
+	/* VENC_GCON_CORE1 register */
+	REGNAME(ven2, 0x0, VENCSYS_CG),
 	/* SPM register */
 	REGNAME(spm, 0xE00, MD1_PWR_CON),
 	REGNAME(spm, 0xFB0, PWR_STATUS),
@@ -1661,6 +1678,9 @@ static struct regname rn[] = {
 	/* MDPSYS0_CONFIG register */
 	REGNAME(mdp0, 0x100, MDPSYS_CG_0),
 	REGNAME(mdp0, 0x110, MDPSYS_CG_1),
+	/* MDPSYS1_CONFIG register */
+	REGNAME(mdp1, 0x100, MDPSYS_CG_0),
+	REGNAME(mdp1, 0x110, MDPSYS_CG_1),
 	/* CCIPLL_PLL_CTRL register */
 	REGNAME(ccipll_pll_ctrl, 0x8, CCIPLL_CON0),
 	REGNAME(ccipll_pll_ctrl, 0xc, CCIPLL_CON1),
@@ -1698,17 +1718,6 @@ static struct regname rn[] = {
 	REGNAME(hwv, 0xb98, HW_CCF_APU_MTCMOS_SET),
 	REGNAME(hwv, 0x598, HW_CCF_MD_MTCMOS_SET),
 	REGNAME(hwv, 0x198, HW_CCF_AP_MTCMOS_SET),
-	REGNAME(hwv, 0x50, VOTER_REG_1),
-	REGNAME(hwv, 0x250, VOTER_REG_2),
-	REGNAME(hwv, 0x450, VOTER_REG_3),
-	REGNAME(hwv, 0x650, VOTER_REG_4),
-	REGNAME(hwv, 0x850, VOTER_REG_5),
-	REGNAME(hwv, 0xA50, VOTER_REG_6),
-	REGNAME(hwv, 0xC50, VOTER_REG_7),
-	REGNAME(hwv, 0xE50, VOTER_REG_8),
-	REGNAME(hwv_ext, 0x50, VOTER_REG_9),
-	REGNAME(hwv_ext, 0x250, VOTER_REG_10),
-	REGNAME(hwv_ext, 0x928, VOTER_REG_11),
 	REGNAME(hwv_ext, 0xf64, HWV_DATA_HISTORY_8),
 	REGNAME(hwv_ext, 0xf68, HWV_DATA_HISTORY_9),
 	REGNAME(hwv_ext, 0x464, HW_CCF_PLL_SET_STATUS),
@@ -2350,84 +2359,7 @@ static void check_hwv_irq_sta(void)
 	if ((irq_sta & HWV_INT_PLL_TRIGGER) == HWV_INT_PLL_TRIGGER)
 		dump_pll_reg(true);
 }
-static enum chk_sys_id extern_dump_id[] = {
-	top,
-	ifrao,
-	apmixed,
-	ifrbus_ao_reg_bus,
-	emi_reg,
-	semi_reg,
-	nemicfg_ao_mem_reg_bus,
-	semicfg_ao_mem_reg_bus,
-	perao,
-	afe,
-	impc,
-	ufscfg_ao_bus,
-	ufscfg_ao,
-	ufscfg_pdn,
-	pextpcfg_ao,
-	impen,
-	impes,
-	imps,
-	impn,
-	gpu_eb_rpc,
-	mfg_ao,
-	mfgsc_ao,
-	dispsys0_config,
-	dispsys1_config,
-	ovlsys0_config,
-	ovlsys1_config,
-	img,
-	dip_top_dip1,
-	dip_nr1_dip1,
-	dip_nr2_dip1,
-	wpe1_dip1,
-	wpe2_dip1,
-	wpe3_dip1,
-	traw_dip1,
-	imgv,
-	vde1,
-	vde2,
-	ven1,
-	ven2,
-	spm,
-	vlpcfg,
-	vlp_ck,
-	scp,
-	scp_iic,
-	scp_fast_iic,
-	cam_m,
-	cam_ra,
-	cam_ya,
-	cam_rb,
-	cam_yb,
-	cam_rc,
-	cam_yc,
-	cam_mr,
-	camsys_ipe,
-	ccu,
-	cam_vcore,
-	dvfsrc_apb,
-	mminfra_config,
-	mdp0,
-	mdp1,
-	ccipll_pll_ctrl,
-	armpll_ll_pll_ctrl,
-	armpll_bl_pll_ctrl,
-	armpll_b_pll_ctrl,
-	ptppll_pll_ctrl,
-	hwv_ext,
-	hwv,
-	hwv_wrt,
-	chk_sys_num,
-};
 
-static void external_dump(void)
-{
-	set_subsys_reg_dump_mt6897(extern_dump_id);
-
-	get_subsys_reg_dump_mt6897();
-}
 /*
  * init functions
  */
@@ -2455,7 +2387,6 @@ static struct clkchk_ops clkchk_mt6897_ops = {
 	.trace_clk_event = trace_clk_event,
 	.check_hwv_irq_sta = check_hwv_irq_sta,
 	.is_suspend_retry_stop = is_suspend_retry_stop,
-	.external_dump = external_dump,
 };
 
 static int clk_chk_mt6897_probe(struct platform_device *pdev)

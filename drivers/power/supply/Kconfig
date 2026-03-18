@@ -206,6 +206,203 @@ config MTK_CHARGER_TYPE_DETECT
 	  Support enable charger type detect when receiving
 	  typec attach notify.
 	  Say N to disable.
-
-
+config CHARGER_UPM6722
+	tristate "UPM6722 Divider Charger Driver"
+	help
+	  Say Y here to enable support of UPM6722 divider charger
+	  It is mainly used as divider charger for
+	  direct charge
+	  It depends on config MTK_CHARGER
 source "$(KCONFIG_EXT_PREFIX)drivers/power/supply/ufcs/Kconfig"
+	  
+
+#driver add by zhaopengge, 20230723-----start
+
+config SC851X_CHARGER
+		tristate "SC851X Charger driver"
+        bool "SC851X Charger Pump driver"
+        default n
+        help
+          If you say yes here you will get support for the SC851X Charge Pump.
+          This driver can give support for SC851X Interface.
+
+config SC8571_CHARGER
+		tristate "SC8571 Charger Pump driver"
+        bool "SC8571 Charger Pump driver"
+        default n
+        help
+          If you say yes here you will get support for the SC8571 Charge Pump.
+          This driver can give support for SC8571 Interface.
+		    
+config PRIZE_MT5728_SUPPORT_30W
+	tristate "MT5728 Battery driver"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Say Y here to enable support for the cellwise MT5728
+	  battery fuel gauge (used in the Pinebook Pro & others)
+
+	  This driver can also be built as a module. If so, the module will be
+	  called MT5728.
+config PRIZE_MT5728_SUPPORT_40W
+	tristate "MT5728 40w Battery driver"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Say Y here to enable support for the cellwise MT5728
+	  battery fuel gauge (used in the Pinebook Pro & others)
+	  This driver can also be built as a module. If so, the module will be
+	  called MT5728.
+	  
+config CHARGER_SC8815A
+	tristate "SC8815A 40w Battery driver"
+	bool "Charger Driver for sc8815a Charger IC"
+	default n
+	help
+	  Say Y here to enable support for the SC8815A charger
+	  battery fuel gauge (used in the Pinebook Pro & others)
+
+	  This driver can also be built as a module. If so, the module will be
+	  called SC8815A.
+
+config BATTERY_SH366003
+	tristate "sh366003 Battery driver"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Say Y here to enable support for the sh366003
+	  battery fuel gauge (used in the Pinebook Pro & others)
+
+	  This driver can also be built as a module. If so, the module will be
+	  called sh366003_battery.
+	  
+config BATTERY_SH366001
+	tristate "sh366001 Battery driver"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Say Y here to enable support for the sh366001
+	  battery fuel gauge (used in the Pinebook Pro & others)
+
+	  This driver can also be built as a module. If so, the module will be
+	  called sh366001_battery.
+	  
+config BATTERY_CW2217
+	tristate "CW2217 Battery driver"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Say Y here to enable support for the cellwise CW2217
+	  battery fuel gauge (used in the Pinebook Pro & others)
+
+	  This driver can also be built as a module. If so, the module will be
+	  called CW2217_battery.
+	  
+	  
+config MTK_CW221X_SUPPORT_OF
+	tristate "CW2217 of Battery driver"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Say Y here to enable support for the cellwise CW2217
+	  battery fuel gauge (used in the Pinebook Pro & others)
+
+	  This driver can also be built as a module. If so, the module will be
+	  called MTK_CW221X_SUPPORT_OF.
+	  
+config CHARGER_SC854X
+	tristate "sc854x charger"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Say Y here to enable support for the sc854x charger
+	  battery fuel gauge (used in the Pinebook Pro & others)
+
+	  This driver can also be built as a module. If so, the module will be
+	  called sc854x.
+
+config BATTERY_SH366100
+	tristate "customer external gauge SH366100"
+	help
+	  Set to Yes if SH366100 is used.
+
+config WIRELESS_MT5706
+	tristate "MT5706 wireless charger driver"
+	default n
+	help
+		Say Y to enable support for Maxic wireless charger.
+		mt5706 wireless charger driver.
+
+config PRIZE_REVERE_CHARGING_MODE
+        bool "rever wireless charging"
+        help
+                Say Y to enable support for rever wireless charging
+	  
+config PRI_CHARGE_CTRL_POLICY
+	tristate "pri ctrl charge"
+	default n
+	help
+	  Say Y here to pri ctrl charge
+	  and drivers.
+	  
+
+# drv add tankaikun, 20231204 start
+config CHARGER_STEP_CHARGE
+	tristate "Step charge"
+	default n
+	help
+	  Say Y here to enable step charge
+	  and drivers.
+
+config CHARGER_FFC_CHARGE
+	tristate "ffc charge support"
+	default n
+	help
+	  Say Y here to enable ffc charge
+	  and drivers.
+
+config FACTORY_CHARGE
+	tristate "Factory charge node"
+	default n
+	help
+	  Say Y here to create factory charge class
+	  and drivers.
+
+config SECOND_CHARGER_SUPPORT
+	tristate "Second charger support"
+	default n
+	help
+	  Say Y here to create second charge node
+	  and drivers.
+
+config ODM_CHARGER_CLASS_SUPPORT
+	bool "odm charge node"
+	help
+	  Say Y here to create odm charge node
+	  and drivers.
+
+config CHARGER_THERMAL_LIMIT
+	tristate "thermal charge support"
+	depends on ODM_CHARGER_CLASS_SUPPORT
+	help
+	  Say Y here to enable screen on thermal control charge
+	  and drivers.
+
+config THIRD_CHARGER_SUPPORT
+	tristate "Third charger support"
+	default n
+	help
+	  Say Y here to create second charge node
+	  and drivers.
+
+config CHARGER_DISABLE_THERMAL_LIMIT
+	tristate "Disable thermal control"
+	default n
+	help
+	  Say Y here to report Tbat=25 && disable thermal limit
+	  and drivers.
+
+#drv add tankaikun, 20231204 end
+#driver add by zhaopengge, 20230723-----end
+
+

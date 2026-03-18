@@ -2808,9 +2808,11 @@ int fpsgo_get_lr_pair(unsigned long long sf_buffer_id,
 		*now_ts = now_ktime_ns;
 
 out:
-	fpsgo_main_trace("[%s] sf_buf_id=%llu, idx=%d, queue_ts=%llu, l2q_ns=%llu, is_logic_alive=%d, now_ts=%llu",
-		__func__, sf_buffer_id, buf_index, cur_l2q_info->queue_end_ns, cur_l2q_info->l2q_ts,
-		cur_l2q_info->is_logic_head_alive, now_ktime_ns);
+	/* Pri added for fpsgo crash issue, see ALPS09959714 and LAX100-793 for details */
+	if (cur_l2q_info)
+		fpsgo_main_trace("[%s] sf_buf_id=%llu, idx=%d, queue_ts=%llu, l2q_ns=%llu, is_logic_alive=%d, now_ts=%llu",
+			__func__, sf_buffer_id, buf_index, cur_l2q_info->queue_end_ns, cur_l2q_info->l2q_ts,
+			cur_l2q_info->is_logic_head_alive, now_ktime_ns);
 
 	fpsgo_render_tree_unlock(__func__);
 	return ret;

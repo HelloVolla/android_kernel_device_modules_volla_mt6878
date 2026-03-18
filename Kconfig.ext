@@ -8,6 +8,14 @@ config DEVICE_MODULES_ALLOW_BUILTIN
 	  into the kernel image.
 	  If unsure, say N.
 
+####### factory build config start #######
+config PRI_FACTORY_BUILD
+	bool "allow factoyr build in kernel"
+	default n
+	help
+	  If unsure, say N.
+####### factory build config end #######
+
 source "$(KCONFIG_EXT_PREFIX)drivers/memory/Kconfig"
 
 source "$(KCONFIG_EXT_PREFIX)drivers/iio/adc/Kconfig"
@@ -79,6 +87,10 @@ source "$(KCONFIG_EXT_PREFIX)drivers/mmc/host/Kconfig"
 source "$(KCONFIG_EXT_PREFIX)drivers/gpu/drm/mediatek/Kconfig"
 
 source "$(KCONFIG_EXT_PREFIX)drivers/input/touchscreen/Kconfig"
+
+#pri LAX10-192 add by yinhanhan 20240402 begin
+source "$(KCONFIG_EXT_PREFIX)drivers/input/fingerprint/Kconfig"
+#pri LAX10-192 add by yinhanhan 20240402 end
 
 source "$(KCONFIG_EXT_PREFIX)drivers/gpu/drm/panel/Kconfig"
 

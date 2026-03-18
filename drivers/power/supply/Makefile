@@ -4,6 +4,9 @@ subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/typec/tcpc/in
 subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/power_throttling
 subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include
 subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/power/supply/ufcs
+# prize add by fangduozhu 20250717, show fuelgauge firmware version start
+subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/hardware_info
+# prize add by fangduozhu 20250717, show fuelgauge firmware version end
 
 obj-$(CONFIG_MTK_CHARGER) += mtk_charger_framework.o mtk_pd_charging.o charger_class.o adapter_class.o mtk_charger_algorithm_class.o mtk_pd_adapter.o mtk_ufcs_adapter.o
 mtk_charger_framework-objs := mtk_charger.o mtk_charger_intf.o mtk_basic_charger.o mtk_pulse_charger.o mtk_adapter_switch.o
@@ -42,3 +45,23 @@ obj-$(CONFIG_CHARGER_RT9759)	+= rt9759.o
 obj-$(CONFIG_CHARGER_RT9490)	+= rt9490-charger.o
 obj-$(CONFIG_CHARGER_RT9758)	+= rt9758-charger.o
 obj-$(CONFIG_UFCS_CLASS)	+= ufcs/
+
+#driver add by zhaopengge -----20240516----start
+ifeq ($(CONFIG_PRI_CHARGE_CTRL_POLICY), m)
+ccflags-$(CONFIG_DRM_MEDIATEK_V2) += -I$(DEVICE_MODULES_PATH)/drivers/gpu/drm/mediatek/mediatek_v2/
+endif
+obj-$(CONFIG_SC851X_CHARGER)	+= sc851x_charger.o
+obj-$(CONFIG_SC8571_CHARGER)	+= sc8571_charger.o
+obj-$(CONFIG_PRIZE_MT5728_SUPPORT_30W) += mt5728_wireless_driver-15w.o MT5728_sha1.o
+obj-$(CONFIG_PRIZE_MT5728_SUPPORT_40W) += mt5728_wireless_driver_40w.o
+obj-$(CONFIG_CHARGER_SC8815A)	+= sc8815a_charger.o
+obj-$(CONFIG_BATTERY_SH366003)	+= sh366003_fg.o
+obj-$(CONFIG_CHARGER_SC854X)	+= sc854x_charger.o
+obj-$(CONFIG_BATTERY_CW2217)	+= cw2217_battery.o
+#driver add by zhaopengge -----20240516----end
+obj-$(CONFIG_BATTERY_SH366100) += sh366100_battery.o
+obj-$(CONFIG_CHARGER_UPM6722)	+= upm6722.o
+obj-$(CONFIG_WIRELESS_MT5706) += mt5706_wireless_charger.o
+mt5706_wireless_charger-objs := mt5706_core.o mt5706_firmware.o mt5706_charger.o
+
+

@@ -3085,6 +3085,36 @@ static int accdet_remove(struct platform_device *pdev)
 	return 0;
 }
 
+/* prize added for tcpc analog switch hl5280 support */
+#if IS_ENABLED(CONFIG_TYPEC_AUDIO_FSA4480_SWITCH)
+void accdet_eint_func_extern(int state)
+{
+	int ret = 0;
+
+	if (state == EINT_PIN_PLUG_OUT){ //OUT=0 IN=1
+		accdet->cur_eint_state = EINT_PIN_PLUG_OUT;
+		//mod_timer(&micbias_timer, jiffies + MICBIAS_DISABLE_TIMER);
+		//accdet_write(0x250a, 0x4);
+		//accdet_write(0x250a, (accdet_read(0x250a)|0x4));
+		//accdet_write(RG_AUDACCDETMICBIAS0PULLLOW_ADDR,
+		// reg | RG_ACCDET_MODE_ANA11_MODE1);
+		//mdelay(5);
+	}else{
+		accdet->cur_eint_state = EINT_PIN_PLUG_IN;
+		//pwrap_write(ACCDET_CTRL, pmic_read(ACCDET_CTRL) & (~ACCDET_EINT0_EN_B2));
+		//accdet_write(0x250a, (accdet_read(0x250a)&0xFB));
+		//mdelay(5);
+	}
+
+	pr_info("accdet %s(), cur_eint_state=%d\n", __func__, accdet->cur_eint_state);
+	//ret = queue_work(eint_workqueue, &eint_work);
+	ret = queue_work(accdet->eint_workqueue, &accdet->eint_work);
+	return;
+}
+EXPORT_SYMBOL(accdet_eint_func_extern);
+#endif
+//prize added by huarui, headset support, 20190111-end
+
 static long mt_accdet_unlocked_ioctl(struct file *file, unsigned int cmd,
 	unsigned long arg)
 {

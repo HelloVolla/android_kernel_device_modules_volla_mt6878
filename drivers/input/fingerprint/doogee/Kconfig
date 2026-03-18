@@ -1,0 +1,12 @@
+#
+#Fingerprint
+#
+if INPUT_FINGERPRINT
+config PRI_FP_DOOGEE_CUSTOMER
+	bool "pri fp doogee customer"
+	default n
+	help
+	  Fingerprint fp doogee customer driver enable/disable
+
+source "$(KCONFIG_EXT_PREFIX)drivers/input/fingerprint/doogee/ft9391_tee/Kconfig"
+endif

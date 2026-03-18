@@ -1,0 +1,10 @@
+#
+# hyn Touchscreen driver configuration
+#
+
+config TOUCHSCREEN_HYN
+    tristate "hyn Touchscreen"
+    default m
+    help
+      Say Y here if you have hyn touch panel.
+      If unsure, say N.

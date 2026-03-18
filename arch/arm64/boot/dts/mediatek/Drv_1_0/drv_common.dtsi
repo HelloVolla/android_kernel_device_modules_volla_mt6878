@@ -1,0 +1,22 @@
+#include "./drv_common.h"
+
+#if MODULE_FINGERPRINT
+#include "./fingerprint/fingerprint.dtsi"
+#endif
+
+#if MODULE_SMART_PA
+#include "./smartpa/smartpa.dtsi"
+#endif
+
+#if MODULE_TYPEC_ACCDET_SWITCH
+#include "./typec_accdet_switch/typec_accdet_switch.dtsi"
+#endif
+
+#if MODULE_TEE
+#include "./tee/tee.dtsi"
+#endif
+
+
+#if MODULE_DRM_SVP_WIDEVINE_L1
+#include "./drm_svp_widevine_l1/drm_svp_widevine_l1.dtsi"
+#endif

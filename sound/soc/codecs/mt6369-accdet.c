@@ -19,7 +19,9 @@
 #include <linux/workqueue.h>
 #include <sound/jack.h>
 #include <sound/soc.h>
-
+//add by liaojie ,for typec accdet 20240524 start
+#include <tcpm.h>
+//add by liaojie ,for typec accdet 20240524 end
 #include "mt6369-accdet.h"
 #include "mt6369.h"
 
@@ -110,6 +112,15 @@ struct mt6369_accdet_data {
 	u32 moisture_vdd_offset;
 	u32 moisture_offset;
 	u32 moisture_eint_offset;
+	//add by drv,liaojie for typec acccet
+//add by liaojie ,for typec accdet 20240524 start
+	u32 sgm3798_bct4321n_enable;
+	u32 mic_detect_thr;
+	int sgm3798_select_pin;
+	int bct4321n_s1;
+	struct tcpc_device *tcpc_dev;
+	struct notifier_block audio_nb;
+//add by liaojie ,for typec accdet 20240524 end
 };
 static struct mt6369_accdet_data *accdet;
 
@@ -709,6 +720,15 @@ static u32 accdet_get_auxadc(void)
 	return vol;
 }
 
+//przie-add fsa4480-pengzhipeng-20230207-start
+#if IS_ENABLED(CONFIG_TYPEC_AUDIO_FSA4480_SWITCH)
+u32 accdet_auxadc_get_val(void)
+{
+    return accdet_get_auxadc();                                                                                                                                                                                                                                               
+}
+EXPORT_SYMBOL_GPL(accdet_auxadc_get_val);
+#endif
+//przie-add fsa4480-pengzhipeng-20230207-end
 static void accdet_get_efuse(void)
 {
 	unsigned short efuseval = 0;
@@ -1636,6 +1656,22 @@ static void eint_work_callback(struct work_struct *work)
 		accdet_init();
 
 		enable_accdet(0);
+//add by liaojie ,for typec accdet 20240524 start		
+		if(accdet->sgm3798_bct4321n_enable){
+			if(accdet->sgm3798_select_pin > 0){
+				mdelay(2);
+				if (accdet_get_auxadc() <= accdet->mic_detect_thr){
+					if (gpio_get_value(accdet->sgm3798_select_pin)){
+						gpio_direction_output(accdet->sgm3798_select_pin,0);
+					}else{
+						gpio_direction_output(accdet->sgm3798_select_pin,1);
+					}
+				}
+				pr_err("typec_accdet AccdetVolt(%d) mic_pin reverse thr(%d)\n",accdet_get_auxadc(),accdet->mic_detect_thr);
+			}
+			
+		}
+//add by liaojie ,for typec accdet 20240524 end		
 	} else {
 		mutex_lock(&accdet->res_lock);
 		accdet->eint_sync_flag = false;
@@ -2449,6 +2485,48 @@ static int accdet_get_dts_data(void)
 		pr_info("Moisture_INT support water_r=%d, int_r=%d\n",
 		     accdet->water_r, accdet->moisture_int_r);
 	}
+//add by liaojie ,for typec accdet 20240524 start	
+	ret = of_property_read_u32(node, "sgm3798_bct4321n_enable", &accdet->sgm3798_bct4321n_enable);
+	if (ret) {
+		accdet->sgm3798_bct4321n_enable = 0;
+	}else{
+		
+		ret = of_property_read_u32(node,"mic_detect_thr",&accdet->mic_detect_thr);
+		if (ret){
+			accdet->mic_detect_thr = 230;
+			pr_err("typec_accdet get mic_detect_thr fail %d, user default 300\n",ret);
+		}
+		//bct 4321n S1 pin
+		accdet->bct4321n_s1 = of_get_named_gpio(node,"bct4321n_s1",0);
+		if (accdet->bct4321n_s1 < 0){
+			pr_err("typec_accdet get accdet->bct4321n_s1 fail %d\n",accdet->bct4321n_s1);
+		}else{
+			ret = gpio_request(accdet->bct4321n_s1,"bct4321n_s1_pin");
+			if (ret < 0){
+				pr_err("typec_accdet gpio_request fail %d\n",ret);
+				accdet->bct4321n_s1 = -1;
+			}else{
+				gpio_direction_output(accdet->bct4321n_s1,0);
+				pr_err("typec_accdet bct4321n_s1_pin default set low\n");
+			}
+		}
+		//sgm3798 mic select pin
+		accdet->sgm3798_select_pin = of_get_named_gpio(node,"sgm3798_select_pin",0);
+		if (accdet->sgm3798_select_pin < 0){
+			pr_err("typec_accdet get sgm3798_select_pin fail %d\n",accdet->sgm3798_select_pin);
+		}else{
+			ret = gpio_request(accdet->sgm3798_select_pin,"sgm3798_select_pin");
+			if (ret < 0){
+				pr_err("typec_accdet gpio_request fail %d\n",ret);
+				accdet->sgm3798_select_pin = -1;
+			}else{
+				gpio_direction_output(accdet->sgm3798_select_pin,0);
+				pr_err("typec_accdet sgm3798_select_pin default set low\n");
+			}
+		}
+		
+	}
+//add by liaojie ,for typec accdet 20240524 end	
 	return 0;
 }
 
@@ -2917,7 +2995,37 @@ int mt6369_accdet_init(struct snd_soc_component *component,
 	return ret;
 }
 EXPORT_SYMBOL_GPL(mt6369_accdet_init);
-
+//add by liaojie ,for typec accdet 20240524 start
+static int audio_tcpc_notifier_call(struct notifier_block *nb,
+					unsigned long event, void *data)
+{
+	struct tcp_notify *noti = data;
+	int ret = 0;
+	
+	switch (event) {
+	case TCP_NOTIFY_TYPEC_STATE:
+		if (noti->typec_state.old_state == TYPEC_UNATTACHED && noti->typec_state.new_state == TYPEC_ATTACHED_AUDIO){
+			  // gpio_direction_output(accdet->bct4321n_s1,1);
+			  pr_info("%s audio accessory Plug in, pol = %d\n", __func__,	noti->typec_state.polarity);
+			  accdet->cur_eint_state = EINT_PLUG_IN;
+			  accdet_write(0x250a, (accdet_read(0x250a)&0xFB));
+			  mdelay(5);
+		}else if(noti->typec_state.old_state == TYPEC_ATTACHED_AUDIO && noti->typec_state.new_state == TYPEC_UNATTACHED){
+			  pr_info("%s audio accessory Plug out\n", __func__);
+			  // gpio_direction_output(accdet->bct4321n_s1,0);
+			  accdet->cur_eint_state = EINT_PLUG_OUT;
+			  accdet_write(0x250a, (accdet_read(0x250a)|0x4));
+			  mdelay(5);
+		}
+		break;
+	default:
+		break;
+	};
+	ret = queue_work(accdet->eint_workqueue, &accdet->eint_work);
+	
+	return NOTIFY_OK;
+}
+//add by liaojie ,for typec accdet 20240524 end
 static int mt6369_accdet_probe(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -3148,9 +3256,25 @@ static int mt6369_accdet_probe(struct platform_device *pdev)
 	}
 	atomic_set(&accdet_first, 1);
 	mod_timer(&accdet_init_timer, (jiffies + ACCDET_INIT_WAIT_TIMER));
-
+//add by liaojie ,for typec accdet 20240524 start
+	if(accdet->sgm3798_bct4321n_enable){
+		
+		accdet->tcpc_dev = tcpc_dev_get_by_name("type_c_port0");
+		
+		if (!accdet->tcpc_dev) {
+			pr_err("%s get tcpc device type_c_port0 fail\n", __func__);
+		}else{
+			accdet->audio_nb.notifier_call = audio_tcpc_notifier_call;
+			ret = register_tcp_dev_notifier(accdet->tcpc_dev, &accdet->audio_nb, TCP_NOTIFY_TYPEC_STATE);
+			if (ret < 0){
+				pr_err("%s: register tcpc notifer fail\n", __func__);
+			}
+		}
+	
+	}
+//add by liaojie ,for typec accdet 20240524 end
+	
 	return 0;
-
 err_create_attr:
 	destroy_workqueue(accdet->eint_workqueue);
 err_create_workqueue:
@@ -3177,6 +3301,38 @@ static int mt6369_accdet_remove(struct platform_device *pdev)
 	return 0;
 }
 
+/* prize added for tcpc analog switch hl5280 support */
+#if IS_ENABLED(CONFIG_TYPEC_AUDIO_FSA4480_SWITCH)
+void accdet_eint_func_extern(int state)
+{
+ int ret = 0;
+
+ if (state == EINT_PLUG_OUT){ //OUT=0 IN=1
+  accdet->cur_eint_state = EINT_PLUG_OUT;
+  //mod_timer(&micbias_timer, jiffies + MICBIAS_DISABLE_TIMER);
+  //accdet_write(0x250a, 0x4);
+  accdet_write(0x250a, (accdet_read(0x250a)|0x4));
+  
+  //accdet_write(RG_AUDACCDETMICBIAS0PULLLOW_ADDR,
+  // reg | RG_ACCDET_MODE_ANA11_MODE1);
+  mdelay(5);
+
+ }else{
+  accdet->cur_eint_state = EINT_PLUG_IN;
+  //pwrap_write(ACCDET_CTRL, pmic_read(ACCDET_CTRL) & (~ACCDET_EINT0_EN_B2));
+  accdet_write(0x250a, (accdet_read(0x250a)&0xFB));
+  mdelay(5);
+
+ }
+
+ pr_info("accdet %s(), cur_eint_state=%d\n", __func__, accdet->cur_eint_state);
+ //ret = queue_work(eint_workqueue, &eint_work);
+ ret = queue_work(accdet->eint_workqueue, &accdet->eint_work);
+ return;
+}
+EXPORT_SYMBOL(accdet_eint_func_extern);
+#endif
+//prize added by huarui, headset support, 20190111-end
 static struct platform_driver mt6369_accdet_driver = {
 	.probe = mt6369_accdet_probe,
 	.remove = mt6369_accdet_remove,

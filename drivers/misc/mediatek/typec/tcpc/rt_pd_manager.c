@@ -3,8 +3,9 @@
  * Copyright (c) 2021 MediaTek Inc.
  */
 
-#include <linux/kernel.h>
 #include <linux/module.h>
+#if IS_ENABLED(CONFIG_TCPC_CLASS)
+#include <linux/kernel.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
 #include <linux/power_supply.h>
@@ -13,8 +14,18 @@
 #include <linux/usb/typec_dp.h>
 
 #include "inc/tcpci_typec.h"
+#include "charger_class.h"
+#include "mtk_charger.h"
 
 #define RT_PD_MANAGER_VERSION	"1.0.11"
+
+static bool dbg_log_en = true;
+module_param(dbg_log_en, bool, 0644);
+#define mt_dbg(dev, fmt, ...) \
+	do { \
+		if (dbg_log_en) \
+			dev_info(dev, "%s " fmt, __func__, ##__VA_ARGS__); \
+	} while(0)
 
 struct rpmd_notifier_block {
 	struct notifier_block nb;
@@ -26,6 +37,10 @@ struct rt_pd_manager_data {
 	u32 nr_port;
 	struct tcpc_device **tcpc;
 	uint8_t *role_def;
+	int sink_mv_new;
+	int sink_ma_new;
+	int sink_mv_old;
+	int sink_ma_old;
 	struct typec_capability *typec_caps;
 	struct typec_port **typec_port;
 	struct typec_partner **partner;
@@ -33,7 +48,40 @@ struct rt_pd_manager_data {
 	struct usb_pd_identity *partner_identity;
 	struct typec_mux **mux;
 	struct rpmd_notifier_block *pd_nb;
+	/* usb suspend */
+	bool usb_suspend;
+	int pd_current_ma;
 };
+
+static struct rt_pd_manager_data *g_rpmd = NULL;
+
+void rt_pd_manager_update_usb_state(bool suspend)
+{
+	union power_supply_propval val;
+	struct power_supply *chrg_psy = NULL;
+
+	chrg_psy = power_supply_get_by_name("mtk-master-charger");
+	if(chrg_psy == NULL){
+		pr_err("get bat_psy err\n");
+		return;
+	}
+	if (!g_rpmd) {
+		pr_warn("[%s] NULL\n", __func__);
+		return;
+	}
+
+	if (g_rpmd->usb_suspend != suspend) {
+		g_rpmd->usb_suspend = suspend;
+		if (g_rpmd->usb_suspend && g_rpmd->pd_current_ma > 100) {
+			/* TODO disable power path */
+			val.intval = true;
+			power_supply_set_property(chrg_psy, POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT, &val);
+		}
+		dev_info(g_rpmd->dev, "[%s] usb state change %d\n",
+			__func__, g_rpmd->usb_suspend);
+	}
+}
+EXPORT_SYMBOL(rt_pd_manager_update_usb_state);
 
 static int pd_tcp_notifier_call(struct notifier_block *nb,
 				unsigned long event, void *data)
@@ -43,29 +91,67 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 		container_of(nb, struct rpmd_notifier_block, nb);
 	struct rt_pd_manager_data *rpmd = pd_nb->rpmd;
 	int ret = 0, idx = pd_nb - rpmd->pd_nb;
+	int bootmode = rpmd->tcpc[idx]->bootmode;
 	uint8_t old_state = TYPEC_UNATTACHED, new_state = TYPEC_UNATTACHED;
 	enum typec_pwr_opmode opmode = TYPEC_PWR_MODE_USB;
 	uint16_t pd_revision = 0x0316;
 	uint32_t partner_vdos[VDO_MAX_NR];
 	struct typec_displayport_data dp_data = {.status = 0, .conf = 0};
 	struct typec_mux_state state = {.mode = 0, .data = &dp_data};
+	struct mtk_charger *info = NULL;
+	struct power_supply *chrg_psy = NULL;
+	union power_supply_propval val;
 
-	dev_info(rpmd->dev, "%s event = %lu, idx = %d\n", __func__, event, idx);
-
+	mt_dbg(rpmd->dev, "event = %lu, idx = %d\n", event, idx);
 	switch (event) {
 	case TCP_NOTIFY_VBUS_SHORT_CC:
-		if (noti->vsc_status.short_status)
-			dev_info(rpmd->dev,
-				 "%s enter short status, short_cc = %s\n",
-				 __func__, noti->vsc_status.short_cc ==
-				 TCPC_POLARITY_CC1 ? "CC1" : "CC2");
-		else
+		if (!noti->vsc_status) {
 			dev_info(rpmd->dev, "%s exit short status\n", __func__);
+			break;
+		}
+		dev_info(rpmd->dev, "%s enter short status, CC%s%s\n", __func__,
+			 noti->vsc_status & BIT(TCPC_POLARITY_CC1) ? "1" : "",
+			 noti->vsc_status & BIT(TCPC_POLARITY_CC2) ? "2" : "");
 		break;
 	case TCP_NOTIFY_SINK_VBUS:
 		dev_info(rpmd->dev, "%s sink vbus %dmV %dmA type(0x%02X)\n",
 				    __func__, noti->vbus_state.mv,
 				    noti->vbus_state.ma, noti->vbus_state.type);
+		rpmd->sink_mv_new = noti->vbus_state.mv;
+		rpmd->sink_ma_new = noti->vbus_state.ma;
+		rpmd->pd_current_ma = noti->vbus_state.ma;
+		chrg_psy = power_supply_get_by_name("mtk-master-charger");
+		if(chrg_psy == NULL){
+			pr_err("get bat_psy err\n");
+			return 0;
+		}
+		info = (struct mtk_charger *)power_supply_get_drvdata(chrg_psy);
+		if(!info) {
+			pr_err("get chrg_psy err\n");
+			return 0;
+		}
+
+		if ((rpmd->sink_mv_new != rpmd->sink_mv_old) ||
+		    (rpmd->sink_ma_new != rpmd->sink_ma_old)) {
+			rpmd->sink_mv_old = rpmd->sink_mv_new;
+			rpmd->sink_ma_old = rpmd->sink_ma_new;
+			if (rpmd->sink_mv_new && (rpmd->sink_ma_new > 100) && (noti->vbus_state.type & TCP_VBUS_CTRL_PD_DETECT)) {
+				dev_info(rpmd->dev, "%s sink_ma_new > 100\n", __func__);
+				if (!rpmd->usb_suspend) {
+					val.intval = false;
+					power_supply_set_property(chrg_psy, POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT, &val);
+				} else {
+					dev_info(rpmd->dev, "%s usb suspend, fixed sink current 0mA\n", __func__);
+				}
+			} else {
+				if((rpmd->sink_ma_new <= 100) && (noti->vbus_state.mv >= 5000) && (noti->vbus_state.type & TCP_VBUS_CTRL_PD_DETECT)) {
+					dev_info(rpmd->dev, "%s sink_ma_new <= 100\n", __func__);
+					charger_dev_set_input_current(info->chg1_dev, noti->vbus_state.ma*1000);
+					val.intval = true;
+					power_supply_set_property(chrg_psy, POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT, &val);
+				}
+			}
+		}
 		break;
 	case TCP_NOTIFY_SOURCE_VBUS:
 		dev_info(rpmd->dev, "%s source vbus %dmV %dmA type(0x%02X)\n",
@@ -156,7 +242,8 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 			/* disable AudioAccessory connection */
 		}
 
-		if (new_state == TYPEC_UNATTACHED) {
+		if (new_state == TYPEC_UNATTACHED ||
+		    new_state == TYPEC_PROTECTION) {
 			typec_unregister_partner(rpmd->partner[idx]);
 			rpmd->partner[idx] = NULL;
 			if (rpmd->typec_caps[idx].prefer_role == TYPEC_SOURCE) {
@@ -201,15 +288,28 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 					TYPEC_ACCESSORY_NONE;
 				break;
 			}
-			rpmd->partner[idx] = typec_register_partner(
-						rpmd->typec_port[idx],
+			/* pri LAX10-3 headset compatible modify by majiangtao 20240509 begin */
+			/* modified for suppressing the following system notification
+			* when analog type-C headset inserted start:
+			* Analog audio accessory detected: The attached device is not
+			* compatible with this phone. */
+
+			if (likely(new_state != TYPEC_ATTACHED_AUDIO)) {
+				rpmd->partner[idx] = typec_register_partner(rpmd->typec_port[idx],
 						&rpmd->partner_desc[idx]);
-			if (IS_ERR(rpmd->partner[idx])) {
-				ret = PTR_ERR(rpmd->partner[idx]);
-				dev_notice(rpmd->dev,
-				"%s typec register partner fail(%d)\n",
-					   __func__, ret);
+				if (IS_ERR(rpmd->partner[idx])) {
+					ret = PTR_ERR(rpmd->partner[idx]);
+					dev_notice(rpmd->dev,
+					"%s typec register partner fail(%d)\n",
+						   __func__, ret);
+				}
 			}
+			else {
+				dev_notice(rpmd->dev,
+					"%s USB audio accessory attach, skip registering tcpc partner\n",
+					__func__);
+			}
+			/* pri LAX10-3 headset compatible modify by majiangtao 20240509 end */
 		}
 		break;
 	case TCP_NOTIFY_PR_SWAP:
@@ -290,6 +390,9 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 				break;
 			if (noti->pd_state.connected <= PD_CONNECT_PE_READY_SRC)
 				pd_revision = 0x0200;
+			//drv add tankaikun, fix power role cannot change, start
+			typec_set_pwr_opmode(rpmd->typec_port[idx], TYPEC_PWR_MODE_PD);
+			//drv add tankaikun, fix power role cannot change, end
 			typec_partner_set_pd_revision(rpmd->partner[idx],
 						      pd_revision);
 			typec_partner_set_svdm_version(rpmd->partner[idx],
@@ -337,6 +440,8 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 		typec_mux_set(rpmd->mux[idx], &state);
 		break;
 	case TCP_NOTIFY_WD0_STATE:
+		if (bootmode == 8 || bootmode == 9)
+			break;
 		tcpm_typec_change_role_postpone(rpmd->tcpc[idx],
 						noti->wd0_state.wd0 ?
 						rpmd->role_def[idx] :
@@ -348,6 +453,10 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 		break;
 	case TCP_NOTIFY_CC_HI:
 		dev_info(rpmd->dev, "%s cc_hi = %d\n", __func__, noti->cc_hi);
+		break;
+	case TCP_NOTIFY_ALERT_RATELIMITED:
+		dev_info(rpmd->dev, "%s alert_ratelimited = %d\n",
+				    __func__, noti->alert_ratelimited);
 		break;
 	default:
 		break;
@@ -599,6 +708,7 @@ out:
 static void rt_pd_manager_remove_helper(struct rt_pd_manager_data *rpmd)
 {
 	int i = 0, ret = 0;
+	g_rpmd = NULL;
 
 	for (i = 0; i < rpmd->nr_port; i++) {
 		if (!rpmd->tcpc[i])
@@ -641,6 +751,10 @@ static int rt_pd_manager_probe(struct platform_device *pdev)
 				      __func__, ret);
 		rpmd->nr_port = 1;
 	}
+
+	rpmd->pd_current_ma = 500;
+	rpmd->usb_suspend = false;
+
 	RPMD_DEVM_KCALLOC(tcpc);
 	RPMD_DEVM_KCALLOC(role_def);
 	RPMD_DEVM_KCALLOC(typec_caps);
@@ -666,7 +780,7 @@ static int rt_pd_manager_probe(struct platform_device *pdev)
 		if (!rpmd->tcpc[i]) {
 			dev_notice(rpmd->dev, "%s get %s fail\n",
 					      __func__, name);
-			ret = -ENODEV;
+			ret = -EPROBE_DEFER;//-ENODEV;
 			goto out;
 		}
 
@@ -692,7 +806,7 @@ static int rt_pd_manager_probe(struct platform_device *pdev)
 		}
 	}
 	dev_info(rpmd->dev, "%s OK!!\n", __func__);
-
+	g_rpmd = rpmd;
 	return 0;
 out:
 	rt_pd_manager_remove_helper(rpmd);
@@ -718,7 +832,7 @@ MODULE_DEVICE_TABLE(of, rt_pd_manager_of_match);
 static struct platform_driver rt_pd_manager_driver = {
 	.driver = {
 		.name = "rt-pd-manager",
-		.of_match_table = of_match_ptr(rt_pd_manager_of_match),
+		.of_match_table = rt_pd_manager_of_match,
 	},
 	.probe = rt_pd_manager_probe,
 	.remove = rt_pd_manager_remove,
@@ -738,9 +852,9 @@ module_exit(rt_pd_manager_exit);
 
 MODULE_AUTHOR("Jeff Chang");
 MODULE_DESCRIPTION("Richtek pd manager driver");
-MODULE_LICENSE("GPL");
 MODULE_VERSION(RT_PD_MANAGER_VERSION);
-
+#endif	/* CONFIG_TCPC_CLASS */
+MODULE_LICENSE("GPL");
 /*
  * Release Note
  * 1.0.11

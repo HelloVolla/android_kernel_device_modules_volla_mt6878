@@ -105,4 +105,18 @@ obj-$(CONFIG_MTK_WIDEVINE_DRM) += widevine_drm/
 obj-$(CONFIG_MTK_PGBOOST) += pgboost/
 obj-$(CONFIG_MTK_MBRAINK)      += mbraink/
 obj-$(CONFIG_MTK_IPS_HELPER) += ips/
+obj-$(CONFIG_CS_NOTIFIER) += cs_notifier/
 
+#pri added by huangxinglve 20250528 for als cali start
+obj-$(CONFIG_PRIZE_PIXEL_MANAGER) += pixel_manager/
+#pri added by huangxinglve 20250528 for als cali end
+obj-$(CONFIG_CS_USB_BROADCAST) += cs_usb_broadcast/
+# pri LAX10-192 added by litao 20240407 begin
+obj-$(CONFIG_PRIZE_HARDWARE_INFO) += hardware_info/
+# pri LAX10-192 added by litao 20240407 end
+#drv add by zhaopengge 20240516--start
+obj-y += pri/
+#drv add by zhaopengge 20240516--end
+#drv add by wangwei1 20240525 start
+obj-$(CONFIG_LCD_BIAS) += lcd_bias/
+#drv add by wangwei1 20240525 end

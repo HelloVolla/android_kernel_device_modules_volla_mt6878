@@ -22,6 +22,9 @@ struct mtk_spk_i2c_ctrl {
 #define MTK_SPK_MEDIATEK_MT6660_STR "MTK_SPK_MEDIATEK_MT6660"
 #define MTK_SPK_RICHTEK_RT5512_STR "MTK_SPK_MEDIATEK_RT5512"
 #define MTK_SPK_GOODIX_TFA98XX_STR "MTK_SPK_GOODIX_TFAXXXX"
+//drv add by pzp, support aw883xx, start
+#define MTK_SPK_AWINIC_AW883XX_STR "MTK_SPK_AWINIC_AW883XX"
+//drv add by pzp, support aw883xx, end
 
 #define MTK_SPK_I2S_0_STR "MTK_SPK_I2S_0"
 #define MTK_SPK_I2S_1_STR "MTK_SPK_I2S_1"
@@ -43,6 +46,9 @@ enum mtk_spk_type {
 	MTK_SPK_MEDIATEK_MT6660,
 	MTK_SPK_GOODIX_TFA98XX,
 	MTK_SPK_MEDIATEK_RT5512,
+	//drv add by pzp, support aw883xx, start
+	MTK_SPK_AWINIC_AW883XX,
+	//drv add by pzp, support aw883xx, end
 	MTK_SPK_TYPE_NUM
 };
 
@@ -74,6 +80,10 @@ enum mtk_spk_i2s_type {
 	MTK_SPK_I2S_OUT1,
 	MTK_SPK_I2S_IN4,
 	MTK_SPK_I2S_OUT4,
+	//add by drv,liaojie for smartpa i2s_in2 out2 config 20240522 start 
+	MTK_SPK_I2S_IN2,
+	MTK_SPK_I2S_OUT2,	
+	//add by drv,liaojie for smartpa i2s_in2 out2 config 20240522  end
 	MTK_SPK_I2S_TYPE_NUM
 };
 

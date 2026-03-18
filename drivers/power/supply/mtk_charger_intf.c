@@ -67,7 +67,21 @@ int get_uisoc(struct mtk_charger *info)
 	union power_supply_propval prop;
 	struct power_supply *bat_psy = NULL;
 	int ret;
-
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+	struct power_supply *bms_psy = NULL;
+	bms_psy = power_supply_get_by_name("cw-bat");
+	if (IS_ERR_OR_NULL(bms_psy)) {
+		pr_err("%s Couldn't get bms_psy\n", __func__);
+	}
+	else{
+		ret = power_supply_get_property(bms_psy,POWER_SUPPLY_PROP_CAPACITY, &prop);
+		ret = prop.intval;
+		chr_err("gezi %s:%d\n", __func__,ret);
+		return ret;
+	}
+#endif
+//drv huangjiwu 20231124 for cw2217  end
 	bat_psy = info->bat_psy;
 
 	if (bat_psy == NULL || IS_ERR(bat_psy)) {
@@ -95,7 +109,21 @@ int get_battery_voltage(struct mtk_charger *info)
 	union power_supply_propval prop;
 	struct power_supply *bat_psy = NULL;
 	int ret;
-
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+	struct power_supply *bms_psy = NULL;
+	bms_psy = power_supply_get_by_name("cw-bat");
+	if (IS_ERR_OR_NULL(bms_psy)) {
+		pr_err("%s Couldn't get bms_psy\n", __func__);
+	}
+	else {
+		ret = power_supply_get_property(bms_psy,POWER_SUPPLY_PROP_VOLTAGE_NOW, &prop);
+		ret = prop.intval / 1000;
+		chr_err("gezi %s:%d\n", __func__,ret);
+		return ret;
+	}
+#endif
+//drv huangjiwu 20231124 for cw2217 end
 	bat_psy = info->bat_psy;
 
 	if (bat_psy == NULL || IS_ERR(bat_psy)) {
@@ -153,7 +181,21 @@ int get_battery_current(struct mtk_charger *info)
 	struct power_supply *bat_psy = NULL;
 	int ret = 0;
 	int tmp_ret = 0;
-
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+	struct power_supply *bms_psy = NULL;
+	bms_psy = power_supply_get_by_name("cw-bat");
+	if (IS_ERR_OR_NULL(bms_psy)) {
+		pr_err("%s Couldn't get bms_psy\n", __func__);
+	}
+	else{
+		ret = power_supply_get_property(bms_psy,POWER_SUPPLY_PROP_CURRENT_NOW, &prop);
+		ret = prop.intval / 1000;
+		chr_err("gezi %s:%d\n", __func__,ret);
+		return ret;
+	}
+#endif
+//drv huangjiwu 20231124 for cw2217  end
 	bat_psy = info->bat_psy;
 
 	if (bat_psy == NULL || IS_ERR(bat_psy)) {
@@ -304,44 +346,55 @@ bool is_charger_exist(struct mtk_charger *info)
 
 int get_charger_type(struct mtk_charger *info)
 {
-	union power_supply_propval prop = {0};
-	union power_supply_propval prop2 = {0};
-	union power_supply_propval prop3 = {0};
-	static struct power_supply *bc12_psy;
-	int ret;
+        union power_supply_propval prop = {0};
+        union power_supply_propval prop2 = {0};
+        union power_supply_propval prop3 = {0};
+        //drv add fangduozhu, wireless charger mt5706 bringup, 20250430 start
+        union charger_propval wls_online = {0};
+        //drv add fangduozhu, wireless charger mt5706 bringup, 20250430 end
+        static struct power_supply *bc12_psy;
+        int ret;
 
-	bc12_psy = info->bc12_psy;
+        bc12_psy = info->bc12_psy;
 
-	if (bc12_psy == NULL || IS_ERR(bc12_psy)) {
-		chr_err("%s retry to get bc12_psy\n", __func__);
-		bc12_psy = power_supply_get_by_name("primary_chg");
-		info->bc12_psy = bc12_psy;
-	}
+        if (bc12_psy == NULL || IS_ERR(bc12_psy)) {
+                chr_err("%s retry to get bc12_psy\n", __func__);
+                bc12_psy = power_supply_get_by_name("primary_chg");
+                info->bc12_psy = bc12_psy;
+        }
 
-	if (bc12_psy == NULL || IS_ERR(bc12_psy)) {
-		chr_err("%s Couldn't get bc12_psy\n", __func__);
-	} else {
-		ret = power_supply_get_property(bc12_psy,
-			POWER_SUPPLY_PROP_ONLINE, &prop);
+        if (bc12_psy == NULL || IS_ERR(bc12_psy)) {
+                chr_err("%s Couldn't get bc12_psy\n", __func__);
+        } else {
+                ret = power_supply_get_property(bc12_psy,
+                        POWER_SUPPLY_PROP_ONLINE, &prop);
 
-		ret = power_supply_get_property(bc12_psy,
-			POWER_SUPPLY_PROP_TYPE, &prop2);
+                ret = power_supply_get_property(bc12_psy,
+                        POWER_SUPPLY_PROP_TYPE, &prop2);
 
-		ret = power_supply_get_property(bc12_psy,
-			POWER_SUPPLY_PROP_USB_TYPE, &prop3);
+                ret = power_supply_get_property(bc12_psy,
+                        POWER_SUPPLY_PROP_USB_TYPE, &prop3);
 
-		if (prop.intval == 0 ||
-		    (prop2.intval == POWER_SUPPLY_TYPE_USB &&
-		    prop3.intval == POWER_SUPPLY_USB_TYPE_UNKNOWN))
-			prop2.intval = POWER_SUPPLY_TYPE_UNKNOWN;
-	}
+                if (prop.intval == 0 ||
+                    (prop2.intval == POWER_SUPPLY_TYPE_USB &&
+                    prop3.intval == POWER_SUPPLY_USB_TYPE_UNKNOWN))
+                        prop2.intval = POWER_SUPPLY_TYPE_UNKNOWN;
+        }
 
-	chr_debug("%s online:%d type:%d usb_type:%d\n", __func__,
-		prop.intval,
-		prop2.intval,
-		prop3.intval);
+        //drv add fangduozhu, wireless charger mt5706 bringup, 20250430 start
+        if (info->wlchg1_dev) {
+                charger_dev_get_property(info->wlchg1_dev, CHARGER_PROP_WLS_CHG_ONLINE, &wls_online);
+                if (wls_online.intval && prop2.intval == POWER_SUPPLY_TYPE_UNKNOWN) {
+                        prop2.intval = POWER_SUPPLY_TYPE_WIRELESS;
+                }
+        }
+        //drv add fangduozhu, wireless charger mt5706 bringup, 20250430 end
+        chr_debug("%s online:%d type:%d usb_type:%d\n", __func__,
+                prop.intval,
+                prop2.intval,
+                prop3.intval);
 
-	return prop2.intval;
+        return prop2.intval;
 }
 
 int get_usb_type(struct mtk_charger *info)

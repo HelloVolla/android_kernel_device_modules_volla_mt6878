@@ -661,8 +661,8 @@ static void mtk_atomic_disp_rsz_roi(struct drm_device *dev,
 				&state->rsz_src_roi,
 				&state->rsz_dst_roi,
 				state->rsz_param);
-		DDPINFO("[RPO] crtc[%d] rsz_enable:%d, (%d,%d,%d,%d)->(%d,%d,%d,%d)\n",
-			drm_crtc_index(crtc), rsz_enable[i], src_total_roi[i].x,
+		DDPINFO("[RPO] crtc[%d] (%d,%d,%d,%d)->(%d,%d,%d,%d)\n",
+			drm_crtc_index(crtc), src_total_roi[i].x,
 			src_total_roi[i].y, src_total_roi[i].width,
 			src_total_roi[i].height, dst_total_roi[i].x,
 			dst_total_roi[i].y, dst_total_roi[i].width,
@@ -1465,11 +1465,7 @@ static enum mml_mode _mtk_atomic_mml_plane(struct drm_device *dev,
 		else
 			DDPMSG("%s, %d GET_OVL_SYS_NUM fail\n", __func__, __LINE__);
 
-		if (mtk_crtc_is_frame_trigger_mode(crtc))
-			ret = mtk_crtc->gce_obj.event[EVENT_MML_DISP_DONE_EVENT];
-		else
-			ret = mtk_ddp_comp_io_cmd(comp, NULL, OVL_FRAME_DONE_EVENT, NULL);
-
+		ret = mtk_crtc->gce_obj.event[EVENT_MML_DISP_DONE_EVENT];
 		if (ret)
 			submit_kernel->info.disp_done_event = ret;
 	}

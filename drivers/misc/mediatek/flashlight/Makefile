@@ -17,8 +17,17 @@ obj-$(CONFIG_MTK_FLASHLIGHT_MT6336)      += flashlights-mt6336.o
 obj-$(CONFIG_MTK_FLASHLIGHT_MT6370)      += flashlights-mt6370.o
 obj-$(CONFIG_MTK_FLASHLIGHT_MT6360)      += flashlights-mt6360.o
 obj-$(CONFIG_MTK_FLASHLIGHT_AW3644)      += flashlights-aw3644.o
+#prize add by lipengpeng 20220608 start
+obj-$(CONFIG_MTK_FLASHLIGHT_AW36518)      += flashlights-aw36518.o
+#prize add by lipengpeng 20220608 start
 obj-$(CONFIG_MTK_FLASHLIGHT_DUMMY)       += flashlights-dummy.o
 obj-$(CONFIG_MTK_FLASHLIGHT_DUMMY_GPIO)  += flashlights-dummy-gpio.o
+#/* prize add by lipengpeng for flash aw3641e 20240925 start*/
+obj-$(CONFIG_MTK_FLASHLIGHT_AW3641E_GPIO)  += flashlights-aw3641e-gpio.o
+#/* prize add by lipengpeng for flash aw3641e 20240925 end*/
+# prize add by chenwenhui for flash OCP81378 start
+obj-$(CONFIG_MTK_FLASHLIGHT_OCP81378)    += flashlights-ocp81378.o
+# prize add by chenwenhui for flash OCP81378 end
 
 ccflags-$(CONFIG_MTK_FLASHLIGHT_DEBUG)     := -DDEBUG
 ccflags-$(CONFIG_MTK_FLASHLIGHT_PT)        += -DCONFIG_MTK_FLASHLIGHT_PT

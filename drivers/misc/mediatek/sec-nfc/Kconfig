@@ -1,0 +1,9 @@
+#
+# Near Field Communication (NFC) devices
+#
+
+menu "Near Field Communication (NFC) devices"
+        depends on NFC
+
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/sec-nfc/samsung/Kconfig"
+endmenu

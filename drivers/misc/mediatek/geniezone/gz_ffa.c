@@ -258,11 +258,6 @@ static long memory_send(bool share, bool involve_sp,
 
 	/* sharing only even pages to produce fragmentations */
 	page_entries /= 2;
-	if (page_entries == 0) {
-		retval = -EINVAL;
-		goto free_mem_ret;
-	}
-
 	pages = kcalloc(page_entries, sizeof(void *), GFP_KERNEL);
 	if (IS_ERR_OR_NULL(pages)) {
 		FFA_ERR("Out of memory. %s:%d\n", __FILE__, __LINE__);
@@ -449,7 +444,6 @@ static int ffa_memory_share_read(struct args *args)
 {
 	uint32_t i;
 	unsigned char *ptr;
-	int ret = 0;
 
 	int found = 0;
 	uint32_t mem_size;
@@ -469,34 +463,29 @@ static int ffa_memory_share_read(struct args *args)
 			break;
 		}
 	}
+	ffa_mem_list_unlock();
 
 	if (found) {
 		ptr = (unsigned char *)mem_record->mem_region;
 		mem_size = mem_record->mem_size;
 	} else {
-		ret = -1;
-		goto err_ret;
+		return -1;
 	}
 
 	if (!ptr) {
 		FFA_ERR("share memory is not yet configured\n");
-		ret = -EFAULT;
-		goto err_ret;
+		return -EFAULT;
 	}
 
 	for (i = 0; i < mem_size; i++) {
 		if (ptr[i] != 'B') {
 			FFA_ERR("%s %d Test failed on ptr[%u], expect=%x, real=%x\n",
 				   __func__, __LINE__, i, 'B', ptr[i]);
-			ret = -EFAULT;
-			goto err_ret;
+			return -EFAULT;
 		}
 	}
-
 	FFA_INFO("%s test passed!\n", __func__);
-err_ret:
-	ffa_mem_list_unlock();
-	return ret;
+	return 0;
 }
 
 /**
@@ -595,6 +584,7 @@ static int gz_ffa_memory_reclaim(struct args *args)
 			break;
 		}
 	}
+	ffa_mem_list_unlock();
 
 	if (found) {
 		kfree(mem_record->origin_mem_region);
@@ -607,10 +597,9 @@ static int gz_ffa_memory_reclaim(struct args *args)
 
 		kfree(mem_record->meta_data);
 
-		ffa_mem_list_unlock();
+		ffa_mem_list_dump();
 		return 0;
 	}
-	ffa_mem_list_unlock();
 
 	ffa_mem_list_dump();
 	return -10;

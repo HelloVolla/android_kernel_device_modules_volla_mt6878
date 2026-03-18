@@ -83,15 +83,6 @@ void clkchk_devapc_dump(void)
 }
 EXPORT_SYMBOL(clkchk_devapc_dump);
 
-void clkchk_external_dump(void)
-{
-	if (clkchk_ops == NULL || clkchk_ops->external_dump == NULL)
-		return;
-
-	clkchk_ops->external_dump();
-}
-EXPORT_SYMBOL(clkchk_external_dump);
-
 static const char *get_provider_name(struct device_node *node, u32 *cells)
 {
 	const char *name;

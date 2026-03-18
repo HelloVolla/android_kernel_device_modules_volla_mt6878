@@ -1,0 +1,36 @@
+#
+#Fingerprint
+#
+menuconfig INPUT_FINGERPRINT
+	bool "fingerprint"
+	help
+	  Say Y here, and a list of supported fingerprint will be displayed.
+	  This option doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+if INPUT_FINGERPRINT
+config MTK_FINGERPRINT_SUPPORT
+	bool "Mediatek Fingerprint"
+	default n
+	help
+	  Fingerprint mtk driver enable/disable
+	  in the kernel.Say Y here if you want to
+	  use mediatek fingerprint driver,fingerprint
+	  driver will support fingerprint function
+
+config MTK_FINGERPRINT_SELECT
+	string "sensor type"
+	default "NA"
+
+config PRIZE_FP_USE_VFP
+	bool "Fingerprint power vfp"
+	default n
+	help
+	  CHIPONE fingerprint CHIPONE's device.
+
+source "$(KCONFIG_EXT_PREFIX)drivers/input/fingerprint/goodix-gw9518/Kconfig"
+source "$(KCONFIG_EXT_PREFIX)drivers/input/fingerprint/focaltech_ree_ata/Kconfig"
+source "$(KCONFIG_EXT_PREFIX)drivers/input/fingerprint/doogee/Kconfig"
+source "$(KCONFIG_EXT_PREFIX)drivers/input/fingerprint/pri_finger_ftm_node/Kconfig"
+endif

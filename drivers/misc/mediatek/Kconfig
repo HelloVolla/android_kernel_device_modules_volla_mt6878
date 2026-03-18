@@ -67,6 +67,9 @@ source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/mmdebug/Kconfig"
 source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/widevine_drm/Kconfig"
 source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/hw_sem/Kconfig"
 endmenu # MultiMedia, Display, Camera
+#drv add by zhaopengge 20240516--start
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/pri/Kconfig"
+#drv add by zhaopengge 20240516--end
 
 menu "Security"
 source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/trusted_mem/Kconfig"
@@ -209,6 +212,15 @@ source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/sensor/Kconfig"
 source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/gate_ic/Kconfig"
 source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/usb/Kconfig"
 source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/mbraink/Kconfig"
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/cs_notifier/Kconfig"
+# pri added by huangxinglve 20250521 for als cali begin
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/pixel_manager/Kconfig"
+# pri added by huangxinglve 20250521 for als cali end
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/cs_usb_broadcast/Kconfig"
+# pri LAX10-192 added by litao 20240408 begin
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/hardware_info/Kconfig"
+# pri LAX10-192 added by litao 20240408 end
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/lcd_bias/Kconfig"
 endmenu # Other Peripheral
 
 menu "Performance"
@@ -254,4 +266,12 @@ config FPGA_EARLY_PORTING
 	  platform and non-FPGA platform.
 	  Say Y here if you are doing FPGA early porting.
 	  If unsure, say N
+
+#drv add by wangwei1 20240525 start
+config LCD_BIAS
+	tristate "lcd bias Driver"
+	help
+	  Enables to support lcd bias. 
+	  If unsure, say N.
+#drv add by wangwei1 20240525 start
 endmenu # Misc

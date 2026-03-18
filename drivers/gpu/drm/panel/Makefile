@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat
 
+obj-$(CONFIG_DRM_PANEL_VISIONOX_HC5622_DPHY_CMD_120HZ)+= panel-visionox-hc5622-dphy-cmd-120hz.o
 obj-$(CONFIG_DRM_PANEL_NOVATEK_NT35695B_VDO) += panel-nt35695b-auo-vdo.o
 obj-$(CONFIG_DRM_PANEL_NOVATEK_NT36672A_VDO) += panel-nt36672a-rt4801-vdo.o
 obj-$(CONFIG_DRM_PANEL_SAMSUNG_ANA6705_CMD) += panel-samsung-ana6705-cmd.o
@@ -42,8 +43,29 @@ obj-$(CONFIG_DRM_PANEL_BOE_TS127QFMLL1DKP0_120HZ) += panel-boe-ts127qfmll1dkp0-1
 obj-$(CONFIG_DRM_PANEL_NT37707_677_FHDP_DPHY_CMD) += panel-nt37707-667-fhdp-dphy-cmd.o
 obj-$(CONFIG_DRM_PANEL_NT37705_1056_1068_DPHY_CMD) += panel-nt37705-1056-1068-dphy-cmd.o
 obj-$(CONFIG_DRM_PANEL_VDTR6130_CMD_120HZ_CSOT) += panel-vdtr6130-fhdp-dsi-cmd-dphy-120hz-csot.o
-obj-$(CONFIG_DRM_PANEL_TIANMA_TL1270100_120HZ) += panel-tianma-tl1270100-120hz.o
-
+#add by wangwei1 20240513 start
+obj-$(CONFIG_DRM_PANEL_TRULY_ILI7807S_VDO_BOE_TXD_A500)+= panel-truly-ili7807s-vdo-boe-txd-120hz_a500.o
+obj-$(CONFIG_DRM_PANEL_TRULY_FT8722_VDO_XP_A500_CPHY) += panel-truly-ft8722-vdo-xp-a500-cphy.o
+obj-$(CONFIG_DRM_PANEL_BOE_FT8725_VDO_QCG_A500_CPHY) += panel-boe-ft8725-vdo-qcg-a500-cphy.o
+obj-$(CONFIG_DRM_PANEL_TRULY_FT8722_VDO_XP_A500_CPHY_GMS) += panel-truly-ft8722-vdo-xp-a500-cphy-gms.o
+obj-$(CONFIG_DRM_PANEL_BOE_FT8725_VDO_QCG_A500_CPHY_GMS) += panel-boe-ft8725-vdo-qcg-a500-cphy-gms.o
+obj-$(CONFIG_DRM_PANEL_BOE_FT8725_VDO_XINGYI_A500_CPHY) += panel-boe-ft8725-vdo-xingyi-a500-cphy.o
+obj-$(CONFIG_DRM_PANEL_BOE_FT8725_VDO_XINGYI_A500_CPHY_GMS) += panel-boe-ft8725-vdo-xingyi-a500-cphy-gms.o
+obj-$(CONFIG_DRM_PANEL_PAYLE_NT37701_CMD_120HZ) += panel-rayle-nt37701-cmd-120hz.o
+obj-$(CONFIG_DRM_PANEL_KY_NT37701_CMD_120HZ) += panel-ky-nt37701-cmd-120hz.o
+obj-$(CONFIG_DRM_PANEL_VISIONOX_RM692E0_DPHY_CMD_120HZ)+= panel-visionox-rm692e0-dphy-cmd-120hz.o
+obj-$(CONFIG_DRM_PANEL_FLSHAN_CO5300_CMD) += panel-flshan-co5300-cmd.o
+obj-$(CONFIG_DRM_PANEL_KANGYUAN_ILI7838A_DPHY_CMD_120HZ)+= panel-ky-ili7838a-dphy-cmd-120hz.o
+#add by wangwei1 20240513 end
+#drv added by chenjiaxi, add new lcm, begin
+obj-$(CONFIG_DRM_PANEL_BOE678_ICNL9922C_VDO_120HZ_FACTORY) += panel-boe678-icnl9922c-vdo-120hz-factory.o
+obj-$(CONFIG_DRM_PANEL_BOE695_ICNL9922C_VDO_120HZ_WCL) += panel-boe695-icnl9922c-vdo-120hz-wcl.o
+obj-$(CONFIG_DRM_PANEL_BOE695_ICNL9922C_VDO_120HZ_WCL_GMS) += panel-boe695-icnl9922c-vdo-120hz-wcl-gms.o
+obj-$(CONFIG_DRM_PANEL_CORNING_ST7701S_VDO_412_960_DPHY_EXT) += panel-corning-st7701s-vdo-412-960-dphy-ext.o
+obj-$(CONFIG_DRM_PANEL_BOE24_ST7701S_VDO_480_640_DPHY_2LANE_EXT) += panel-boe24-st7701s-vdo-480-640-dphy-2lane-ext.o
+obj-$(CONFIG_DRM_PANEL_PROJECTOR_VDO_351_800_DPHY_2LANE_EXT) += panel-projector-vdo-351-800-dphy-2lane-ext.o
+obj-$(CONFIG_DRM_PANEL_PROJECTOR_VDO_854_480_DPHY_2LANE_EXT) += panel-projector-vdo-854-480-dphy-2lane-ext.o
+#drv added by chenjiaxi, add new lcm, end
 ifneq ($(wildcard $(srctree)/$(src)/k6985v1_64),)
 obj-$(CONFIG_DRM_TD2204_WQHD_AMB678ZY01_S6E3HC3_CMD) += k6985v1_64/td2204-wqhd-amb678zy01-s6e3hc3-cmd.o
 endif
@@ -67,11 +89,11 @@ ifneq ($(wildcard $(srctree)/$(src)/k6878v1_64_alpha),)
 obj-$(CONFIG_DRM_PANEL_MOT_CSOT_NT37705_DPHY_CMD) += k6878v1_64_alpha/dsi-panel-mot-csot-nt37705-1056x1068-dphy-cmd-cli.o
 obj-$(CONFIG_DRM_PANEL_MOT_CSOT_NT37707_FHDP_DPHY_CMD) += k6878v1_64_alpha/dsi-panel-mot-csot-nt37707-667-fhdp-dphy-cmd.o
 endif
-
 ifneq ($(wildcard $(srctree)/$(src)/k6989v2_64_alpha),)
 obj-$(CONFIG_DRM_PANEL_NT37706A_BOE_FHDPLUS_VDO) += k6989v2_64_alpha/panel-nt37706a-boe-fhdplus-vdo.o
 endif
 
+obj-$(CONFIG_DRM_PANEL_HX_NT37706_VDO_120HZ) += panel-hx-nt37706-vdo-120hz.o
 mediatek-drm-gateic-y := mtk_drm_panel_i2c.o \
 		  mtk_drm_gateic_rt4801h.o \
 		  mtk_drm_gateic_rt4831a.o \

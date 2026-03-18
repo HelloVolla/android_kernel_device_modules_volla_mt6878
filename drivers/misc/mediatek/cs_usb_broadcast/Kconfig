@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+config CS_USB_BROADCAST
+	tristate "Enable CS USB BROADCAST Control"
+	help
+	  This is used for usb plug in/out notify.

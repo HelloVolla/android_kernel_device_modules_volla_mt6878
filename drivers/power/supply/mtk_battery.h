@@ -167,6 +167,9 @@ struct battery_data {
 	/* Add for Battery Service */
 	int bat_batt_vol;
 	int bat_batt_temp;
+//drv add fangduozhu, bringup fuel gauge, 20250206 start
+	struct power_supply *fuelgauge_psy;
+//drv add fangduozhu, bringup fuel gauge, 20250206 end
 };
 
 struct VersionControl {
@@ -1155,8 +1158,9 @@ struct mtk_battery {
 
 	int dynamic_shutdown_cond;
 	int bob_exist;
-
-	/* vsys bound*/
+	struct power_supply *cw_bat;
+	
+		/* vsys bound*/
 	int disable_quick_shutdown;
 	int vsys_det_voltage1;
 	int vsys_det_voltage2;

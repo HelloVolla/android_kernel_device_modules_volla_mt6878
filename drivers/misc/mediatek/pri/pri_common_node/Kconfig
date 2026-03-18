@@ -1,0 +1,14 @@
+config PRI_COMMON_NODE
+        tristate "pri common node config"
+        help
+          Say Y here if you have a pri common node config and want to enable
+          support for the built-in pri common node.
+
+          If unsure, say N.
+#pri add by ocean for holster mode 20240920 begin
+config TOUCH_HOLSTER_MODE
+    bool "touch add holster mode"
+    default n
+    help
+      If unsure, say N.
+#pri add by ocean for holster mode 20240920 end

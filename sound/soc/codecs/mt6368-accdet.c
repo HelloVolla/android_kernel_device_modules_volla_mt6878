@@ -27,6 +27,9 @@
 #include <sound/soc.h>
 #include <sound/jack.h>
 #include <linux/mfd/mt6397/core.h>
+//add by liaojie ,for typec accdet 20240524 start
+#include <tcpm.h>
+//add by liaojie ,for typec accdet 20240524 end
 #include "mt6368-accdet.h"
 #include "mt6368.h"
 /* grobal variable definitions */
@@ -116,6 +119,15 @@ struct mt63xx_accdet_data {
 	u32 moisture_vdd_offset;
 	u32 moisture_offset;
 	u32 moisture_eint_offset;
+	//add by drv,liaojie for typec acccet
+//add by liaojie ,for typec accdet 20240524 start
+	u32 sgm3798_bct4321n_enable;
+	u32 mic_detect_thr;
+	int sgm3798_select_pin;
+	int bct4321n_s1;
+	struct tcpc_device *tcpc_dev;
+	struct notifier_block audio_nb;
+//add by liaojie ,for typec accdet 20240524 end
 };
 static struct mt63xx_accdet_data *accdet;
 
@@ -715,6 +727,15 @@ static u32 accdet_get_auxadc(void)
 	return vol;
 }
 
+//przie-add fsa4480-pengzhipeng-20230207-start
+#if IS_ENABLED(CONFIG_TYPEC_AUDIO_FSA4480_SWITCH)
+u32 accdet_auxadc_get_val(void)
+{
+    return accdet_get_auxadc();                                                                                                                                                                                                                                               
+}
+EXPORT_SYMBOL_GPL(accdet_auxadc_get_val);
+#endif
+//przie-add fsa4480-pengzhipeng-20230207-end
 static void accdet_get_efuse(void)
 {
 	unsigned short efuseval = 0;
@@ -3280,6 +3301,27 @@ static long mt_accdet_unlocked_ioctl(struct file *file, unsigned int cmd,
 	}
 	return 0;
 }
+/* prize added for tcpc analog switch hl5280 support */
+#if IS_ENABLED(CONFIG_TYPEC_AUDIO_FSA4480_SWITCH)
+void accdet_eint_func_extern(int state)
+{
+	int ret = 0;
+
+	pr_info("%s: call ex eint handler, state %d\n", __func__, state);
+
+	accdet->cur_eint_state = (state == 1 ? EINT_PLUG_IN : EINT_PLUG_OUT);
+
+	disable_irq_nosync(accdet->gpioirq);//
+
+	pr_info("accdet %s(), cur_eint_state=%d\n", __func__, accdet->cur_eint_state);
+
+	ret = queue_work(accdet->eint_workqueue, &accdet->eint_work);
+
+	pr_info("%s: exit queue work\n", __func__);
+}
+EXPORT_SYMBOL(accdet_eint_func_extern);
+#endif
+//prize added by huarui, headset support, 20190111-end
 
 #if IS_ENABLED(CONFIG_USB_SWITCH_ET7480)
 void accdet_eint_callback_wrapper(unsigned int plug_status)

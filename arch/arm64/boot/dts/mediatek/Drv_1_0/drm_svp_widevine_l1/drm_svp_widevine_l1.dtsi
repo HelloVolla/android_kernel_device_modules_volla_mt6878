@@ -1,0 +1,72 @@
+#include "../drv_common.h"
+
+
+#if PRI_PLATFORM_MT6835
+#include "./mt6835/custom.h"
+#endif
+
+#if PRI_PLATFORM_MT6878
+#include "./mt6878/custom.h"
+#endif
+
+#if LD2_K6x
+&mtkheap_page_svp {
+status = "ok";
+};
+
+&mtkheap_page_wfd {
+status = "ok";
+};
+
+&mtkheap_region_svp {
+status = "ok";
+};
+
+&mtkheap_region_wfd {
+status = "ok";
+};
+
+ 
+
+&mtee_svp {
+mtee: MTEE {
+compatible = "mediatek,mtk_svp_on_mtee_support";
+};
+
+svp: SecureVideoPath {
+compatible = "mediatek,mtk_sec_video_path_support";
+};
+};
+
+#endif
+
+#if LD2_K61_MT6835_MT6789
+
+&mtkheap_page_svp {
+	status = "ok";
+};
+
+&mtkheap_page_wfd {
+	status = "ok";
+};
+
+&mtkheap_region_svp {
+	status = "ok";
+};
+
+&mtkheap_region_wfd {
+	status = "ok";
+};
+
+ 
+
+&mtee_svp {
+	mtee: MTEE {
+	compatible = "mediatek,mtk_svp_on_mtee_support";
+	};
+
+svp: SecureVideoPath {
+	compatible = "mediatek,mtk_sec_video_path_support";
+	};
+};
+#endif

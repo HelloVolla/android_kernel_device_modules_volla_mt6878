@@ -30,7 +30,7 @@
 #include <linux/suspend.h>
 #include "mtk_battery.h"
 #include "mtk_battery_table.h"
-
+#include "charger_class.h"
 
 struct tag_bootmode {
 	u32 size;
@@ -614,9 +614,20 @@ static int battery_psy_get_property(struct power_supply *psy,
 	union power_supply_propval *val)
 {
 	int ret = 0;
-	int curr_now = 0, curr_avg = 0, voltage_now = 0;
+//drv huangjiwu 20231124 for cw2217  start
+#if !IS_ENABLED(CONFIG_BATTERY_CW2217)
+
+	int curr_now = 0, voltage_now = 0;
+#endif
+//drv huangjiwu 20231124 for cw2217  start
 	struct mtk_battery *gm;
 	struct battery_data *bs_data;
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+	struct power_supply *gauge;
+	union power_supply_propval guage_val;
+#endif
+//drv huangjiwu 20231124 for cw2217  start
 
 	gm = (struct mtk_battery *)power_supply_get_drvdata(psy);
 	bs_data = &gm->bs_data;
@@ -631,7 +642,34 @@ static int battery_psy_get_property(struct power_supply *psy,
 	}
 	/* gauge_get_property should check return value */
 	/* to avoid i2c suspend but query by other module */
-
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+	gauge = power_supply_get_by_name("cw-bat");
+	if (gauge) 
+		{
+		   ret = power_supply_get_property(gauge, POWER_SUPPLY_PROP_CAPACITY, &guage_val);
+		   gm->ui_soc = guage_val.intval;
+		   bs_data->bat_capacity = gm->ui_soc;
+		  // printk("lpp for ui_soc gm->ui_soc =%d \n",gm->ui_soc);
+         }
+#endif
+//drv huangjiwu 20231124 for cw2217  start
+    
+	//drv add fangduozhu, bringup fuel gauge, 20250206 start
+	if (!bs_data->fuelgauge_psy) {
+		bs_data->fuelgauge_psy = devm_power_supply_get_by_phandle(
+				&gm->gauge->pdev->dev, "battery");
+	}
+	if (!IS_ERR_OR_NULL(bs_data->fuelgauge_psy) &&
+		psp != POWER_SUPPLY_PROP_TEMP && psp != POWER_SUPPLY_PROP_STATUS) {
+		ret = power_supply_get_property(bs_data->fuelgauge_psy,
+				psp, val);
+		if (!ret) {
+			return ret;
+		}
+		ret = 0;
+	}
+	//drv add fangduozhu, bringup fuel gauge, 20250206 end
 	switch (psp) {
 	case POWER_SUPPLY_PROP_STATUS:
 		val->intval = bs_data->bat_status;
@@ -640,12 +678,27 @@ static int battery_psy_get_property(struct power_supply *psy,
 		val->intval = bs_data->bat_health;
 		break;
 	case POWER_SUPPLY_PROP_PRESENT:
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+ 		if (gauge) {
+			ret = power_supply_get_property(gauge, POWER_SUPPLY_PROP_PRESENT, &guage_val);
+			val->intval = guage_val.intval;
+		} else {
+		bs_data->bat_present = 1;
 
+		val->intval = bs_data->bat_present;
+		gm->present = bs_data->bat_present;
+		}
+#else
+//drv huangjiwu 20231124 for cw2217  end
 		bs_data->bat_present = 1;
 
 		val->intval = bs_data->bat_present;
 		gm->present = bs_data->bat_present;
 
+//drv huangjiwu 20231124 for cw2217  start
+#endif
+//drv huangjiwu 20231124 for cw2217  end
 		ret = 0;
 		break;
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
@@ -657,6 +710,16 @@ static int battery_psy_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CAPACITY:
 		/* 1 = META_BOOT, 4 = FACTORY_BOOT 5=ADVMETA_BOOT */
 		/* 6= ATE_factory_boot */
+//prize add by lipengpeng 20221021 start 
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+		if (gauge) {
+                        ret = power_supply_get_property(gauge, POWER_SUPPLY_PROP_CAPACITY, &guage_val);
+                        val->intval = guage_val.intval;
+                } else {
+                        val->intval = 0;
+                }
+#else
+//drv huangjiwu 20231124 for cw2217  end
 		if (gm->bootmode == 1 || gm->bootmode == 4
 			|| gm->bootmode == 5 || gm->bootmode == 6) {
 			val->intval = 75;
@@ -667,8 +730,24 @@ static int battery_psy_get_property(struct power_supply *psy,
 			val->intval = gm->fixed_uisoc;
 		else
 			val->intval = bs_data->bat_capacity;
+//drv huangjiwu 20231124 for cw2217  start
+#endif
+//drv huangjiwu 20231124 for cw2217  start
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+		if (gauge) {
+                        ret = power_supply_get_property(gauge, POWER_SUPPLY_PROP_CURRENT_NOW, &guage_val);
+                        val->intval = guage_val.intval;
+						
+						gm->ibat = guage_val.intval / 100;
+						printk("lpp----CURRENT_NOW val->intval=%d  gm->ibat=%d\n",val->intval,gm->ibat);
+                } else {
+                        val->intval = 0;
+                }
+#else
+//drv huangjiwu 20231124 for cw2217  end
 		ret = gauge_get_property_control(gm, GAUGE_PROP_BATTERY_CURRENT,
 			&curr_now, 1);
 
@@ -678,10 +757,22 @@ static int battery_psy_get_property(struct power_supply *psy,
 			val->intval = curr_now * 100;
 			gm->ibat = curr_now;
 		}
-
+//drv huangjiwu 20231124 for cw2217  start
+#endif
+//drv huangjiwu 20231124 for cw2217  end
 		ret = 0;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_AVG:
+//add by wanwen get avg_current 20250722 start
+#if IS_ENABLED(CONFIG_BATTERY_SH366100)
+		if (!IS_ERR_OR_NULL(bs_data->fuelgauge_psy)) {
+			ret = power_supply_get_property(bs_data->fuelgauge_psy, POWER_SUPPLY_PROP_CURRENT_NOW, val);
+			printk("lpp----CURRENT_AVG val->intval=%d\n",val->intval);
+                } else {
+                        val->intval = 0;
+                }
+#else
+//add by wanwen get avg_current 20250722 end
 		ret = gauge_get_property_control(gm, GAUGE_PROP_AVERAGE_CURRENT,
 			&curr_avg, 1);
 
@@ -689,7 +780,9 @@ static int battery_psy_get_property(struct power_supply *psy,
 			val->intval = gm->ibat * 100;
 		else
 			val->intval = curr_avg * 100;
-
+//drv huangjiwu 20231124 for cw2217  start
+#endif
+//drv huangjiwu 20231124 for cw2217  end
 		ret = 0;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
@@ -698,13 +791,34 @@ static int battery_psy_get_property(struct power_supply *psy,
 				gm->battery_id].q_max * 1000;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+			if (gauge) {
+                        ret = power_supply_get_property(gauge, POWER_SUPPLY_PROP_CYCLE_COUNT, &guage_val);
+                        val->intval = guage_val.intval+1;
+                } else {
+                        val->intval = 1;
+                }
+#else
 		val->intval = gm->ui_soc *
 			gm->fg_table_cust_data.fg_profile[
 				gm->battery_id].q_max * 1000 / 100;
+#endif
+//drv huangjiwu 20231124 for cw2217  start
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		/* 1 = META_BOOT, 4 = FACTORY_BOOT 5=ADVMETA_BOOT */
 		/* 6= ATE_factory_boot */
+//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+		if (gauge) {
+                        ret = power_supply_get_property(gauge, POWER_SUPPLY_PROP_VOLTAGE_NOW, &guage_val);
+                        val->intval = guage_val.intval;
+                } else {
+                        val->intval = 0;
+                }
+#else
+//drv huangjiwu 20231124 for cw2217  end
 		if (gm->bootmode == 1 || gm->bootmode == 4
 			|| gm->bootmode == 5 || gm->bootmode == 6) {
 			val->intval = 4000000;
@@ -724,13 +838,33 @@ static int battery_psy_get_property(struct power_supply *psy,
 			gm->vbat = bs_data->bat_batt_vol;
 			val->intval = bs_data->bat_batt_vol * 1000;
 		}
+//drv huangjiwu 20231124 for cw2217  start
+#endif
+//drv huangjiwu 20231124 for cw2217  end
 		ret = 0;
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
 		val->intval = force_get_tbat(gm, false) * 10;
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
+	//drv huangjiwu 20231124 for cw2217  start
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+		if (IS_ERR_OR_NULL(gauge)) {
+				pr_err("%s Couldn't get gauge\n", __func__);
+				val->intval = 0;
+			}
+			else{
+				ret = power_supply_get_property(gauge,POWER_SUPPLY_PROP_CAPACITY, &guage_val);
+				val->intval = guage_val.intval;
+				//pr_err("%s:%d\n", __func__,ret);
+				val->intval = check_cap_level(val->intval);
+			}	
+#else
+//drv huangjiwu 20231124 for cw2217  end
 		val->intval = check_cap_level(bs_data->bat_capacity);
+//drv huangjiwu 20231124 for cw2217  start
+#endif
+//drv huangjiwu 20231124 for cw2217  end
 		break;
 	case POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
 		/* full or unknown must return 0 */
@@ -782,6 +916,7 @@ static int battery_psy_get_property(struct power_supply *psy,
 			}
 			val->intval = q_max_uah;
 		}
+		val->intval = 5300000;
 		break;
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
 		bs_data = &gm->bs_data;
@@ -854,6 +989,10 @@ static void mtk_battery_external_power_changed(struct power_supply *psy)
 	struct power_supply *chg_psy = NULL;
 	struct power_supply *dv2_chg_psy = NULL;
 	int ret;
+#if IS_ENABLED(CONFIG_WIRELESS_MT5706)
+        struct charger_device *wlchg1_dev = NULL;
+	union charger_propval wls_work_mode = {0};
+#endif /* CONFIG_WIRELESS_MT5706 */
 
 	gm = psy->drv_data;
 	bs_data = &gm->bs_data;
@@ -865,6 +1004,17 @@ static void mtk_battery_external_power_changed(struct power_supply *psy)
 		return;
 	}
 
+#if IS_ENABLED(CONFIG_WIRELESS_MT5706)
+	if (!wlchg1_dev) {
+		wlchg1_dev = get_charger_by_name("wireless_chg");
+		if (!wlchg1_dev) {
+			pr_info("%s: get wls charger device failed\n", __func__);
+			return;
+		}
+        }
+	charger_dev_get_property(wlchg1_dev, CHARGER_PROP_WLS_MODE, &wls_work_mode);
+	pr_err("extcon-usb wls_work_mode:%d \n", wls_work_mode.intval);
+#endif
 	if (IS_ERR_OR_NULL(chg_psy)) {
 		chg_psy = devm_power_supply_get_by_phandle(&gm->gauge->pdev->dev,
 						       "charger");
@@ -879,8 +1029,11 @@ static void mtk_battery_external_power_changed(struct power_supply *psy)
 
 		ret = power_supply_get_property(chg_psy,
 			POWER_SUPPLY_PROP_ENERGY_EMPTY, &vbat0);
-
+#if IS_ENABLED(CONFIG_WIRELESS_MT5706)
+		if (!online.intval && (wls_work_mode.intval != WLS_WORK_MODE_RX)) {
+#else
 		if (!online.intval) {
+#endif
 			bs_data->bat_status = POWER_SUPPLY_STATUS_DISCHARGING;
 		} else {
 			if (status.intval == POWER_SUPPLY_STATUS_NOT_CHARGING) {
@@ -969,7 +1122,7 @@ void battery_service_data_init(struct mtk_battery *gm)
 	bs_data->bat_status = POWER_SUPPLY_STATUS_DISCHARGING,
 	bs_data->bat_health = POWER_SUPPLY_HEALTH_GOOD,
 	bs_data->bat_present = 1,
-	bs_data->bat_technology = POWER_SUPPLY_TECHNOLOGY_LION,
+	bs_data->bat_technology = POWER_SUPPLY_TECHNOLOGY_LIPO,
 	bs_data->bat_capacity = -1,
 	bs_data->bat_batt_vol = 0,
 	bs_data->bat_batt_temp = 0,
@@ -1085,6 +1238,22 @@ int force_get_tbat_internal(struct mtk_battery *gm)
 	ktime_t ctime = 0, dtime = 0, pre_time = 0;
 	struct timespec64 tmp_time;
 	int ret = 0;
+//drv add by wanwen 20250626 start
+#if IS_ENABLED(CONFIG_BATTERY_SH366100)
+	struct power_supply *gauge;
+	union power_supply_propval guage_val;
+
+	gauge = power_supply_get_by_name("ext-bat");
+	if (gauge) {
+                ret = power_supply_get_property(gauge, POWER_SUPPLY_PROP_TEMP, &guage_val);
+		printk("force_get_tbat_internal-xx-TEMP-guage_val.intval=%d\n",guage_val.intval);
+		return (guage_val.intval)/10;
+        } else {
+		return 25; //drv for  battery ntc
+  
+        }
+#endif
+//drv add by wanwen 20250626 end
 
 	if (pre_bat_temperature_val == -1) {
 		/* Get V_BAT_Temperature */
@@ -2809,7 +2978,7 @@ void battery_update(struct mtk_battery *gm)
 	}
 
 	battery_update_psd(gm);
-	bat_data->bat_technology = POWER_SUPPLY_TECHNOLOGY_LION;
+	bat_data->bat_technology = POWER_SUPPLY_TECHNOLOGY_LIPO;
 	bat_data->bat_health = POWER_SUPPLY_HEALTH_GOOD;
 	gauge_get_property_control(gm, GAUGE_PROP_BATTERY_EXIST,
 		&bat_data->bat_present, 0);
@@ -2829,10 +2998,23 @@ void battery_update(struct mtk_battery *gm)
 /* ============================================================ */
 void disable_fg(struct mtk_battery *gm)
 {
-	gm->disableGM30 = true;
-	gm->ui_soc = 50;
-	gm->bs_data.bat_capacity = 50;
-
+//drv add by wanwen  get normal uisoc 20250707 start
+#if IS_ENABLED(CONFIG_BATTERY_SH366100)
+       struct power_supply *gauge;
+       union power_supply_propval guage_val;
+       gm->disableGM30 = true;
+       gauge = power_supply_get_by_name("ext-bat");
+       if (gauge) {
+               power_supply_get_property(gauge, POWER_SUPPLY_PROP_CAPACITY, &guage_val);
+               gm->ui_soc = guage_val.intval;
+               gm->bs_data.bat_capacity = guage_val.intval;
+       }
+#else
+        gm->disableGM30 = true;
+        gm->ui_soc = 50;
+        gm->bs_data.bat_capacity = 50;
+#endif
+//drv add by wanwen  get normal uisoc 20250707 end
 	disable_all_irq(gm);
 }
 
@@ -3058,7 +3240,7 @@ static int uisoc_set(struct mtk_battery *gm,
 	old_uisoc = gm->ui_soc;
 
 	if (gm->disableGM30 == true)
-		gm->ui_soc = 50;
+		gm->ui_soc = old_uisoc;//drv add by wanwen  get normal uisoc 20250707 start
 	else
 		gm->ui_soc = (daemon_ui_soc + 50) / 100;
 
@@ -3353,6 +3535,18 @@ static void fg_drv_update_hw_status(struct mtk_battery *gm)
 	char reg_type_name[MAX_REGMAP_TYPE_LEN];
 	int i, regmap_type;
 
+//drv add by wanwen  get normal uisoc 20250707 start
+#if IS_ENABLED(CONFIG_BATTERY_SH366100)
+       struct power_supply *gauge;
+       union power_supply_propval guage_val;
+       gm->disableGM30 = true;
+       gauge = power_supply_get_by_name("ext-bat");
+       if (gauge) {
+               power_supply_get_property(gauge, POWER_SUPPLY_PROP_CAPACITY, &guage_val);
+               gm->ui_soc = guage_val.intval;
+       }
+#endif
+//drv add by wanwen  get normal uisoc 20250707 end
 	prop_control = &gm->prop_control;
 	gm->tbat = force_get_tbat_internal(gm);
 	fg_update_porp_control(prop_control);
@@ -3822,7 +4016,23 @@ int next_waketime(int polling)
 	else
 		return 10;
 }
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+static int get_cw_soc(struct mtk_battery *gm)
+{
+	int ret = 0;
+	union power_supply_propval prop;
+	
+	if (IS_ERR_OR_NULL(gm->cw_bat)) {
+		pr_err("%s Couldn't get cw_bat\n", __func__);
+		gm->cw_bat = power_supply_get_by_name("cw-bat");
+	}
+	
+	ret = power_supply_get_property(gm->cw_bat,POWER_SUPPLY_PROP_CAPACITY, &prop);
+	 
+	return prop.intval;
 
+}
+#endif
 static int shutdown_event_handler(struct mtk_battery *gm)
 {
 	ktime_t now, duraction;
@@ -3830,8 +4040,13 @@ static int shutdown_event_handler(struct mtk_battery *gm)
 	int polling = 0;
 	static int ui_zero_time_flag;
 	int now_current = 0;
+#if IS_ENABLED(CONFIG_BATTERY_CW2217)
+	int current_ui_soc = get_cw_soc(gm);
+	int current_soc = get_cw_soc(gm);
+#else
 	int current_ui_soc = gm->ui_soc;
 	int current_soc = gm->soc;
+#endif
 	int vbat = 0;
 	int tmp = 25;
 	struct shutdown_controller *sdd = &gm->sdc;
@@ -4310,6 +4525,281 @@ int fg_prop_control_init(struct mtk_battery *gm)
 	return 0;
 }
 
+//drv add by wanwen add battery info class 20250711 start
+#if IS_ENABLED(CONFIG_BATTERY_SH366100)
+extern int battery_info_get_property(struct power_supply* psy, enum battery_info_property prop, union power_supply_propval* val);
+extern int battery_info_set_property(struct power_supply* psy, enum battery_info_property prop, union power_supply_propval* val);
+
+static ssize_t device_name_show(struct class *class, struct class_attribute *attr,	char *buf)
+{
+	union power_supply_propval guage_val;
+	struct power_supply *bat_psy = NULL;
+	int ret = 0;
+
+	bat_psy = power_supply_get_by_name("ext-bat");
+	if(bat_psy == NULL){
+		pr_err("[battery_info] get bat_psy err\n");
+		goto failed;
+	}
+
+	if (bat_psy) {
+		ret = power_supply_get_property(bat_psy, POWER_SUPPLY_PROP_MODEL_NAME, &guage_val);
+		if (ret < 0) {
+			pr_err("[battery_info] get POWER_SUPPLY_PROP_MODEL_NAME fail\n");
+			goto failed;
+		}
+		printk("get POWER_SUPPLY_PROP_MODEL_NAME =%s\n",guage_val.strval);
+	}
+
+	return sprintf(buf, "%s\n", guage_val.strval);
+failed:
+	return sprintf(buf, "%s\n", "XXXXX");
+}
+
+static ssize_t manufacturer_date_show(struct class *class, struct class_attribute *attr,	char *buf)
+{
+	union power_supply_propval guage_val;
+	struct power_supply *bat_psy = NULL;
+	int ret = 0;
+
+	bat_psy = power_supply_get_by_name("ext-bat");
+	if(bat_psy == NULL){
+		pr_err("[battery_info] get bat_psy err\n");
+		goto failed;
+	}
+
+	if (bat_psy) {
+		ret = battery_info_get_property(bat_psy, BAT_INFO_PROP_MANUFACTURER_DATE, &guage_val);
+		if (ret < 0) {
+			pr_err("[battery_info] get BAT_INFO_PROP_MANUFACTURER_DATE fail\n");
+                        goto failed;
+		}
+		printk("get BAT_INFO_PROP_MANUFACTURER_DATE = %s\n",guage_val.strval);
+	}
+
+	return sprintf(buf, "%s\n", guage_val.strval);
+failed:
+	return sprintf(buf, "%s\n", "XXX");
+}
+
+static ssize_t manufacturer_date_store(struct class *class, struct class_attribute *attr,
+						const char *buf, size_t count)
+{
+	int i = 0, ret = 0;
+	u32 tmp = 0;
+	union power_supply_propval guage_val;
+	struct power_supply *chrg_psy = NULL;
+
+	chrg_psy = power_supply_get_by_name("ext-bat");
+	if(chrg_psy == NULL) {
+		pr_err("get bat_psy err\n");
+		return count;
+	}
+
+	if (buf != NULL && count != 0) {
+		pr_err("[manufacturer][manufacturer_date_store] buf is %s and size is %zu\n", buf, count);
+		for(i = 0; i < count;i++){
+			pr_err("[manufacturer][manufacturer_date_store] buf[%d]=0x%x \n", i,buf[i]);
+		}
+		ret = kstrtouint(buf, 16, &tmp);
+		guage_val.intval = tmp;
+		battery_info_set_property(chrg_psy, BAT_INFO_PROP_MANUFACTURER_DATE, &guage_val);
+		pr_err("[manufacturer][manufacturer_date_store] ret=%d date=0x%x \n",ret, tmp);
+	}
+	return count;
+}
+
+static ssize_t serial_number_show(struct class *class, struct class_attribute *attr,	char *buf)
+{
+	union power_supply_propval guage_val;
+	struct power_supply *bat_psy = NULL;
+	int ret = 0;
+	bat_psy = power_supply_get_by_name("ext-bat");
+	if(bat_psy == NULL){
+		pr_err("[battery_info] get bat_psy err\n");
+		goto failed;
+	}
+
+	if (bat_psy) {
+		ret = power_supply_get_property(bat_psy, POWER_SUPPLY_PROP_SERIAL_NUMBER, &guage_val);
+		if (ret < 0) {
+                        pr_err("[battery_info] get POWER_SUPPLY_PROP_SERIAL_NUMBER fail\n");
+                        goto failed;
+                }
+		printk("get POWER_SUPPLY_PROP_SERIAL_NUMBER = %s\n",guage_val.strval);
+	}
+	return sprintf(buf, "%s\n", guage_val.strval);
+failed:
+	return sprintf(buf, "%s\n", "XXXXX");
+}
+
+static ssize_t battery_capacity_show(struct class *class, struct class_attribute *attr,	char *buf)
+{
+	union power_supply_propval guage_val;
+	struct power_supply *bat_psy = NULL;
+	int ret = 0;
+
+	bat_psy = power_supply_get_by_name("ext-bat");
+	if(bat_psy == NULL){
+		pr_err("[battery_info] get chrg_psy err\n");
+		goto failed;
+	}
+
+	if (bat_psy) {
+		ret = power_supply_get_property(bat_psy, POWER_SUPPLY_PROP_CAPACITY, &guage_val);
+		if (ret < 0) {
+                        pr_err("[battery_info] get POWER_SUPPLY_PROP_CAPACITY fail\n");
+                        goto failed;
+                }
+		printk("get POWER_SUPPLY_PROP_CAPACITY = %d\n",guage_val.intval);
+	}
+
+	return sprintf(buf, "%d\n", guage_val.intval);
+failed:
+	return sprintf(buf, "%d\n", 100);
+}
+
+static ssize_t max_voltage_show(struct class *class, struct class_attribute *attr,	char *buf)
+{
+	return sprintf(buf, "%d\n", 4450);
+}
+
+static ssize_t cycle_count_show(struct class *class, struct class_attribute *attr,	char *buf)
+{
+	union power_supply_propval guage_val;
+	struct power_supply *bat_psy = NULL;
+	int ret = 0;
+
+	bat_psy = power_supply_get_by_name("ext-bat");
+	if(bat_psy == NULL){
+		pr_err("[battery_info] get chrg_psy err\n");
+		goto failed;
+	}
+
+	if (bat_psy) {
+		ret = power_supply_get_property(bat_psy, POWER_SUPPLY_PROP_CYCLE_COUNT, &guage_val);
+		if (ret < 0) {
+                        pr_err("[battery_info] get POWER_SUPPLY_PROP_CYCLE_COUNT fail\n");
+                        goto failed;
+                }
+		printk("get POWER_SUPPLY_PROP_CYCLE_COUNT = %d\n",guage_val.intval);
+	}
+	return sprintf(buf, "%d\n", guage_val.intval);
+
+failed:
+	return sprintf(buf, "%d\n", 1);
+}
+
+static ssize_t soh_show(struct class *class, struct class_attribute *attr,	char *buf)
+{
+	union power_supply_propval guage_val;
+	struct power_supply *bat_psy = NULL;
+	int ret = 0;
+
+	bat_psy = power_supply_get_by_name("ext-bat");
+	if(bat_psy == NULL){
+		pr_err("[battery_info] get chrg_psy err\n");
+		goto failed;
+	}
+
+	if (bat_psy) {
+		ret = battery_info_get_property(bat_psy, BAT_INFO_PROP_SOH, &guage_val);
+		if (ret < 0) {
+                        pr_err("[battery_info] get BAT_INFO_PROP_SOH fail\n");
+                        goto failed;
+                }
+		printk("get BAT_INFO_PROP_SOH=%d\n",guage_val.intval);
+	}
+	return sprintf(buf, "%d\n", guage_val.intval);
+
+failed:
+	return sprintf(buf, "%d\n", 100);
+}
+
+static ssize_t activation_date_show(struct class *class, struct class_attribute *attr,	char *buf)
+{
+	union power_supply_propval guage_val;
+	struct power_supply *bat_psy = NULL;
+	int ret = 0;
+
+	bat_psy = power_supply_get_by_name("ext-bat");
+	if(bat_psy == NULL){
+		pr_err("[battery_info] get chrg_psy err\n");
+		goto failed;
+	}
+
+	if (bat_psy) {
+		ret = battery_info_get_property(bat_psy, BAT_INFO_PROP_ACTIVATION_DATE, &guage_val);
+                if (ret < 0) {
+                        pr_err("[battery_info] get BAT_INFO_PROP_ACTIVATION_DATE fail\n");
+                        goto failed;
+                }
+		printk("get BAT_INFO_PROP_ACTIVATION_DATE =%s\n",guage_val.strval);
+	}
+	return sprintf(buf, "%s\n", guage_val.strval);
+failed:
+	return sprintf(buf, "%s\n", "XXX");
+}
+
+static ssize_t activation_date_store(struct class *class, struct class_attribute *attr,
+						const char *buf, size_t count)
+{
+	int i = 0, ret = 0;
+	u32 tmp = 0;
+	union power_supply_propval guage_val;
+	struct power_supply *chrg_psy = NULL;
+
+	chrg_psy = power_supply_get_by_name("ext-bat");
+	if(chrg_psy == NULL) {
+		pr_err("get bat_psy err\n");
+		return count;
+	}
+
+	if (buf != NULL && count != 0) {
+		pr_err("[activation][activation_date_store] buf is %s and size is %zu\n", buf, count);
+		for(i = 0; i < count;i++){
+			pr_err("[activation][activation_date_store] buf[%d]=0x%x \n", i,buf[i]);
+		}
+		ret = kstrtouint(buf, 16, &tmp);
+		guage_val.intval = tmp;
+		battery_info_set_property(chrg_psy, BAT_INFO_PROP_ACTIVATION_DATE, &guage_val);
+		pr_err("[activation][activation_date_store] ret=%d date=0x%x \n",ret, tmp);
+	}
+	return count;
+}
+
+static struct class * battery_info_class;
+static struct class_attribute battery_info_class_attrs[] = {
+	__ATTR(device_name, S_IRUGO, device_name_show, NULL),
+	__ATTR(manufacturer_date, S_IRUGO | S_IWUSR, manufacturer_date_show, manufacturer_date_store),
+	__ATTR(serial_number, S_IRUGO, serial_number_show, NULL),
+	__ATTR(battery_capacity, S_IRUGO,battery_capacity_show, NULL),
+	__ATTR(max_voltage, S_IRUGO, max_voltage_show, NULL),
+	__ATTR(cycle_count, S_IRUGO, cycle_count_show, NULL),
+	__ATTR(soh, S_IRUGO, soh_show, NULL),
+	__ATTR(activation_date, S_IRUGO | S_IWUSR, activation_date_show, activation_date_store),
+	__ATTR_NULL,
+};
+
+static int battery_info_sysfs_create(void)
+{
+	int i = 0,ret = 0;
+	battery_info_class = class_create(THIS_MODULE, "battery_info");
+	if (IS_ERR(battery_info_class))
+		return PTR_ERR(battery_info_class);
+	for (i = 0; battery_info_class_attrs[i].attr.name; i++) {
+		ret = class_create_file(battery_info_class,&battery_info_class_attrs[i]);
+		if (ret < 0)
+		{
+			pr_err("battery_info sysfs create error !!\n");
+			return ret;
+		}
+	}
+	return ret;
+}
+#endif
+//drv add by wanwen add battery info class 20250711 end
+
 int battery_init(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -4389,6 +4879,11 @@ int battery_init(struct platform_device *pdev)
 		bm_err("[%s]: enable Kernel mode Gauge\n", __func__);
 	}
 
+//drv add by wanwen add battery info class 20250711 start
+#if IS_ENABLED(CONFIG_BATTERY_SH366100)
+        battery_info_sysfs_create();
+#endif
+//drv add by wanwen add battery info class 20250711 end
 	return 0;
 }
 

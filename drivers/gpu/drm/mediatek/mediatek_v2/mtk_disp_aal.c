@@ -355,8 +355,7 @@ void disp_aal_notify_backlight_changed(struct mtk_ddp_comp *comp,
 		service_flags = AAL_SERVICE_FORCE_UPDATE;
 	} else if (atomic_read(&aal_data->primary_data->is_init_regs_valid) == 0 ||
 		(atomic_read(&aal_data->primary_data->force_relay) == 1 &&
-		!pq_data->new_persist_property[DISP_PQ_CCORR_SILKY_BRIGHTNESS]) ||
-		(atomic_read(&aal_data->primary_data->func_flag) == 0)) {
+		!pq_data->new_persist_property[DISP_PQ_CCORR_SILKY_BRIGHTNESS])) {
 		/* AAL Service is not running */
 
 		if (aal_data->primary_data->led_type != TYPE_ATOMIC)
@@ -430,14 +429,47 @@ int led_brightness_changed_event_to_aal(struct notifier_block *nb, unsigned long
 			disp_aal_notify_backlight_changed(comp, trans_level, -1,
 				led_conf->cdev.max_brightness, 1);
 		} else {
-			trans_level = (
+
+			//drv huangxinglve sync for hbm mode of The sun automatically backlights to its maximum brightness-pengzhipeng-20230529-start
+			printk("[%d]hxl_ch_bl_aal brightness:%d !!\n", __LINE__, led_conf->cdev.brightness);
+			if(led_conf->cdev.brightness == 256)
+			{
+				trans_level = 3765;
+				led_conf->max_hw_brightness = 4095;
+			}
+			else if(led_conf->cdev.brightness == 257)
+			{
+				trans_level = 3895;
+				led_conf->max_hw_brightness = 4095;
+			}
+			else if(led_conf->cdev.brightness == 258)
+			{
+				trans_level = 3997;
+				led_conf->max_hw_brightness = 4095;
+			}
+			else if(led_conf->cdev.brightness == 259)
+			{
+				trans_level = 4095;
+				led_conf->max_hw_brightness = 4095;
+			}			
+			else
+			{
+
+				trans_level = (
 				led_conf->max_hw_brightness
 				* led_conf->cdev.brightness
-				+ (led_conf->cdev.max_brightness / 2))
-				/ led_conf->cdev.max_brightness;
-			if (led_conf->cdev.brightness != 0 &&
-				trans_level == 0)
-				trans_level = 1;
+				+ (255 / 2))
+				/ 255;
+				if (led_conf->cdev.brightness != 0 &&trans_level == 0)
+				{
+					trans_level = 1;
+				}	
+
+				led_conf->max_hw_brightness = 3624;//mod by huangxinglve, 20250826, mod for custom request 550nit
+
+			}
+			//drv huangxinglve sync for hbm mode of The sun automatically backlights to its maximum brightness-pengzhipeng-20230529-end
+
 
 			disp_aal_notify_backlight_changed(comp, trans_level, -1,
 				led_conf->max_hw_brightness, 1);
@@ -3610,8 +3642,6 @@ static int mtk_aal_user_cmd(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
 			mtk_dmdp_aal_bypass(aal_data->comp_dmdp_aal, *value, handle);
 
 		if (comp->mtk_crtc->is_dual_pipe) {
-			if(aal_data->companion == NULL)
-				return -EFAULT;
 			mtk_aal_bypass(aal_data->companion, *value, handle);
 			if (aal_data->primary_data->aal_fo->mtk_dre30_support) {
 				struct mtk_disp_aal *aal_companion_data = comp_to_aal(aal_data->companion);

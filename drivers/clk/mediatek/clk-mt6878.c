@@ -13,7 +13,6 @@
 #include <linux/of_device.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
-#include <linux/trace_events.h>
 
 #include "clk-mtk.h"
 #include "clk-mux.h"
@@ -2753,32 +2752,6 @@ static int clk_mt6878_pll_registration(enum subsys_id id,
 	return r;
 }
 
-#if IS_ENABLED(CONFIG_MTK_CLKMGR_FTRACE)
-static int clk_set_trace_event(struct platform_device *pdev)
-{
-	trace_set_clr_event(NULL, "clk_disable", 1);
-	trace_set_clr_event(NULL, "clk_disable_complete", 1);
-	trace_set_clr_event(NULL, "clk_enable", 1);
-	trace_set_clr_event(NULL, "clk_enable_complete", 1);
-	trace_set_clr_event(NULL, "clk_prepare", 1);
-	trace_set_clr_event(NULL, "clk_prepare_complete", 1);
-	trace_set_clr_event(NULL, "clk_set_parent", 1);
-	trace_set_clr_event(NULL, "clk_set_parent_complete", 1);
-	trace_set_clr_event(NULL, "clk_set_rate", 1);
-	trace_set_clr_event(NULL, "clk_set_rate_complete", 1);
-	trace_set_clr_event(NULL, "clk_unprepare", 1);
-	trace_set_clr_event(NULL, "clk_unprepare_complete", 1);
-	trace_set_clr_event(NULL, "rpm_idle", 1);
-	trace_set_clr_event(NULL, "rpm_resume", 1);
-	trace_set_clr_event(NULL, "rpm_return_int", 1);
-	trace_set_clr_event(NULL, "rpm_suspend", 1);
-	trace_set_clr_event(NULL, "rpm_usage", 1);
-	pr_notice("%s init end\n",__func__);
-
-	return 0;
-}
-#endif
-
 static int clk_mt6878_apmixed_probe(struct platform_device *pdev)
 {
 	return clk_mt6878_pll_registration(APMIXEDSYS, apmixed_plls,
@@ -2922,12 +2895,6 @@ void mt6878_pll_force_off(void)
 EXPORT_SYMBOL_GPL(mt6878_pll_force_off);
 
 static const struct of_device_id of_match_clk_mt6878[] = {
-#if IS_ENABLED(CONFIG_MTK_CLKMGR_FTRACE)
-	{
-		.compatible = "clk-ftrace",
-		.data = clk_set_trace_event,
-	},
-#endif
 	{
 		.compatible = "mediatek,mt6878-apmixedsys",
 		.data = clk_mt6878_apmixed_probe,

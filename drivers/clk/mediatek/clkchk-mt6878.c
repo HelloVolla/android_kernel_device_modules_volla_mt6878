@@ -886,6 +886,9 @@ static struct regname rn[] = {
 	/* DISPSYS_CONFIG register */
 	REGNAME(mm, 0x100, MMSYS_CG_0),
 	REGNAME(mm, 0x110, MMSYS_CG_1),
+	/* IMGSYS_MAIN register */
+	REGNAME(img, 0x50, IMG_IPE_CG),
+	REGNAME(img, 0x0, IMG_MAIN_CG),
 	/* DIP_TOP_DIP1 register */
 	REGNAME(dip_top_dip1, 0x0, MACRO_CG),
 	/* DIP_NR1_DIP1 register */
@@ -1599,63 +1602,7 @@ static void check_hwv_irq_sta(void)
 /*
  * init functions
  */
-static enum chk_sys_id extern_dump_id[] = {
-	top,
-	ifrao,
-	apmixed,
-	ifr,
-	emi_reg,
-	nemicfg_ao_mem_reg_bus,
-	ssr_top,
-	perao,
-	afe,
-	im_c_s,
-	ufsao,
-	ufspdn,
-	imp_e_s,
-	imp_es_s,
-	imp_w_s,
-	mfg_ao,
-	mfgsc_ao,
-	mm,
-	img ,
-	dip_top_dip1,
-	dip_nr1_dip1,
-	dip_nr2_dip1,
-	wpe1_dip1,
-	wpe2_dip1,
-	traw_dip1,
-	img_v,
-	vde2,
-	ven1,
-	spm,
-	vlpcfg_reg,
-	vlp,
-	scp,
-	hfrp,
-	cam_m,
-	cam_ra,
-	cam_ya,
-	cam_rb,
-	cam_yb,
-	cam_mr,
-	ccu,
-	cam_vcore,
-	dvfsrc_top,
-	mminfra_config,
-	mdp,
-	hwv,
-	hwv_ext,
-	hwv_wrt,
-	chk_sys_num,
-};
 
-static void external_dump(void)
-{
-	set_subsys_reg_dump_mt6878(extern_dump_id);
-
-	get_subsys_reg_dump_mt6878();
-}
 static struct clkchk_ops clkchk_mt6878_ops = {
 	.get_all_regnames = get_all_mt6878_regnames,
 	.get_pvd_pwr_data_idx = get_pvd_pwr_data_idx,
@@ -1679,7 +1626,6 @@ static struct clkchk_ops clkchk_mt6878_ops = {
 	.trace_clk_event = trace_clk_event,
 	.check_hwv_irq_sta = check_hwv_irq_sta,
 	.is_suspend_retry_stop = is_suspend_retry_stop,
-	.external_dump = external_dump,
 };
 
 static int clk_chk_mt6878_probe(struct platform_device *pdev)

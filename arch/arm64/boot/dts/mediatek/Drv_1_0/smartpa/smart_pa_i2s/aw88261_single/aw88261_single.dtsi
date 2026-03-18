@@ -1,0 +1,33 @@
+#include "../../../drv_common.h"
+
+#if PRI_PLATFORM_MT6789
+#include "./mt6789/custom.h"
+#endif
+
+
+#if PRI_PLATFORM_MT6878
+#include "./mt6878/custom.h"
+#endif
+
+/* AWINIC AW882XX Smart PA mono*/
+&I2C_NUM {
+	aw882xx_smartpa_0: aw882xx_smartpa_0@I2C_DTS_ADRR {  //DA1:0  DA2:0
+		compatible = "awinic,aw882xx_smartpa";
+		#sound-dai-cells = <0>;
+		reg = <I2C_ADDR>;
+		irq-gpio = <&pio IRQ_GPIO 0x0>;
+		sound-channel = <0>;
+	#if PRI_PLATFORM_MT6878 
+		sync-load = <1>; /*固件加载方式，若驱动以KO方式编译时,需配置为 1*/
+	#endif
+		aw-re-min = <4000>; /*Re 校准范围最小值（mOhms）*/
+		aw-re-max = <30000>; /*Re 校准范围最大值（mOhms）*/
+		status = "okay";
+	};
+};
+&sound {
+	mediatek,spk-i2s = <I2S_OUT_NUM I2S_IN_NUM>;
+	mediatek,speaker-codec {
+		sound-dai = <&aw882xx_smartpa_0>;
+	};
+};

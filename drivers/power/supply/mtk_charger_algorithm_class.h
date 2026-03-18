@@ -24,6 +24,7 @@
 #define PE5_ID   (1 << 4)
 #define HVBP_ID  (1 << 5)
 #define PE5P_ID  (1 << 6)
+#define WL_ID	 (1 << 7) // drv add tankaikun, add facoryt charger class, 20231204
 
 struct chg_alg_properties {
 	const char *alias_name;
@@ -83,6 +84,7 @@ struct chg_alg_device {
 	bool is_polling_mode;
 	int alg_id;
 	int adapter_priority;
+	bool pe_ready_check_done;//drv-mod, pe50 check, 20230913
 };
 
 enum chg_alg_notifier_events {
@@ -125,6 +127,10 @@ struct chg_limit_setting {
 	int input_current_limit_dvchg1;
 	int charging_current_limit1;
 	int charging_current_limit2;
+	// drv add tankaikun, add step charging, 20231130 start
+	int charging_current_cv_tapper;
+	int step_cv;
+	// drv add tankaikun, add step charging, 20231130 end
 	bool vbat_mon_en;
 	int adapter_priority;
 };

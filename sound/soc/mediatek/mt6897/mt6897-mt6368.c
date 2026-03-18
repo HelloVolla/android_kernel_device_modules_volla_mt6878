@@ -1965,6 +1965,38 @@ static int mt6897_mt6368_bypass_primary_codec(struct platform_device *pdev)
 	card->num_dapm_routes = ARRAY_SIZE(mt6897_mt6368_routes_dummy);
 	return 0;
 }
+//prize add by lipengpeng 20220615 start 
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X) || IS_ENABLED(CONFIG_SND_SOC_AW882XX_V_2_0_0)
+struct snd_soc_dai_link_component awinic_codecs[] = 
+{ 
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X)
+ { 
+  .of_node = NULL, 
+  .dai_name = "aw883xx-aif-0", 
+  .name = "aw883xx_smartpa_0",
+ },
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X_STEREO)
+  { 
+  .of_node = NULL, 
+  .dai_name = "aw883xx-aif-1", 
+  .name = "aw883xx_smartpa_1",
+ }, 
+#endif
+#endif
+
+#if IS_ENABLED(CONFIG_SND_SOC_AW882XX_V_2_0_0)
+ { 
+  .of_node = NULL, 
+  .dai_name = "aw882xx-aif-6-34", 
+  .name = "aw882xx_smartpa.6-0034",
+ },
+#endif
+
+
+};
+#endif
+extern void pri_dacn_add_card_controls(struct snd_soc_card *card);
+//prize add by lipengpeng 20220615 end 
 
 static int mt6897_mt6368_dev_probe(struct platform_device *pdev)
 {
@@ -1976,6 +2008,9 @@ static int mt6897_mt6368_dev_probe(struct platform_device *pdev)
 	dev_info(&pdev->dev, "%s() successfully start\n", __func__);
 
 	/* update speaker type */
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X) || IS_ENABLED(CONFIG_SND_SOC_AW882XX_V_2_0_0)
+	mtk_spk_set_type(MTK_SPK_MEDIATEK_RT5512);
+#endif
 	ret = mtk_spk_update_info(card, pdev);
 	if (ret) {
 		dev_info(&pdev->dev, "%s(), mtk_spk_update_info error\n",
@@ -2005,6 +2040,13 @@ static int mt6897_mt6368_dev_probe(struct platform_device *pdev)
 			dai_link->platforms->of_node = platform_node;
 
 		if (!strcmp(dai_link->name, "Speaker Codec")) {
+//prize add by lipengpeng 20220615 start 
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X) || IS_ENABLED(CONFIG_SND_SOC_AW882XX_V_2_0_0)
+			dai_link->codecs = awinic_codecs;
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X_STEREO)
+			dai_link->num_codecs=2; //prize add by lipengpeng 20220615 start
+#endif
+#else
 			ret = snd_soc_of_get_dai_link_codecs(
 						&pdev->dev, spk_node, dai_link);
 			if (ret < 0) {
@@ -2012,7 +2054,17 @@ static int mt6897_mt6368_dev_probe(struct platform_device *pdev)
 					"Speaker Codec get_dai_link fail: %d\n", ret);
 				return -EINVAL;
 			}
+#endif
+//prize add by lipengpeng 20220615 end 
 		} else if (!strcmp(dai_link->name, "Speaker Codec Ref")) {
+//prize add by lipengpeng 20220615 start 
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X) || IS_ENABLED(CONFIG_SND_SOC_AW882XX_V_2_0_0)
+			dai_link->codecs = awinic_codecs;
+#if IS_ENABLED(CONFIG_SND_SOC_AW8839X_STEREO)
+			dai_link->num_codecs=2; //prize add by lipengpeng 20220615 start
+#endif
+
+#else
 			ret = snd_soc_of_get_dai_link_codecs(
 						&pdev->dev, spk_node, dai_link);
 			if (ret < 0) {
@@ -2020,6 +2072,8 @@ static int mt6897_mt6368_dev_probe(struct platform_device *pdev)
 					"Speaker Codec Ref get_dai_link fail: %d\n", ret);
 				return -EINVAL;
 			}
+#endif
+//prize add by lipengpeng 20220615 end
 		}
 	}
 

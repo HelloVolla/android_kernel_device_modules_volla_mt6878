@@ -71,7 +71,6 @@ struct mtk_dsi_driver_data {
 		struct mtk_drm_crtc *mtk_crtc, unsigned int en);
 	const unsigned int bubble_rate;
 	const enum DSI_N_Version n_verion;
-	const u32 dsi_targetline_ratio;
 };
 
 struct mtk_dsi {

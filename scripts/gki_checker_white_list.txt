@@ -60,7 +60,6 @@ f drivers/usb/gadget/function/u_serial.c
 f fs/coredump.c
 f fs/erofs/zdata.c
 f fs/ext4/namei.c
-f fs/f2fs/file.c
 f fs/fuse/backing.c
 f fs/fuse/dir.c
 f fs/fuse/fuse_i.h

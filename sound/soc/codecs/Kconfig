@@ -13,6 +13,11 @@ config DEVICE_MODULES_SND_SOC_ALL_CODECS
 	imply DEVICE_MODULES_SND_SOC_MT6369
 	imply DEVICE_MODULES_SND_SOC_HDMI_CODEC
 	imply SND_SOC_RT5512
+#drv add by pengzhipeng 20220606 start
+	imply SND_SOC_AW8839X
+	imply SND_SOC_AW882XX_V_2_0_0
+	imply SND_SOC_AW87XXX
+#drv add by pengzhipeng 20220606 end
 	imply SND_SOC_TFA9874
 	help
 	  Normally ASoC codec drivers are only built if a machine driver which
@@ -39,6 +44,35 @@ config SND_SOC_RT5512
 	  amplifier which contain speaker protection,
 	  multi-band DRC, equalizer function. It would
 	  be set to yes if device with RT5512 on it.
+#prize add by lipengpeng 20220606 start 
+config SND_SOC_AW8839X
+	tristate "Mediatek AW8839X speaker amplifier"
+	depends on I2C
+	help
+	  Config of AW8839X. It is a Smart power
+	  amplifier which contain speaker protection,
+	  multi-band DRC, equalizer function. It would
+	  be set to yes if device with AW8839X on it.
+	  
+config SND_SOC_AW8839X_STEREO
+	tristate "Mediatek AW8839X_STEREO speaker amplifier"
+	depends on I2C
+	help
+	  Config of AW8839X_STEREO. It is a Smart power
+	  amplifier which contain speaker protection,
+	  multi-band DRC, equalizer function. It would
+	  be set to yes if device with AW8839X on it.
+	  	  
+config SND_SOC_AW882XX_V_2_0_0
+	tristate "Mediatek AW882XX_V_2_0_0 speaker amplifier"
+	depends on I2C
+	help
+	  Config of AW882XX_V_2_0_0. It is a Smart power
+	  amplifier which contain speaker protection,
+	  multi-band DRC, equalizer function. It would
+	  be set to yes if device with AW882XX_V_2_0_0 on it.
+	  
+#prize add by lipengpeng 20220606 end 
 
 config SND_SOC_TFA9874
 	tristate "NXP TFA9874 speaker amplifier"
@@ -158,5 +192,20 @@ config SND_SOC_MT6681_ACCDET
 	  MediaTek develop it for ASoC codec soc-jack
 	  detection mechanism. Select N if you don't
 	  have jack on board.
+
+#begin sce drv zhangmeng add bring up audio on 20250421
+config SND_SOC_AW87XXX
+	tristate "SoC Audio for awinic AW87XXX Smart K PA"
+	depends on I2C
+	help
+		This option enables support for AW87XXX Smart K PA.
+
+config MTK_HAC_SUPPORT
+        tristate "HAC for awinic aw881xx series"
+        default n
+        help
+          This option enables support for HAC.
+
+#end sce drv zhangmeng add bring up audio on 20250421
 
 endmenu

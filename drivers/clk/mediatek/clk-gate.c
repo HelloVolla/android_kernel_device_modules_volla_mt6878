@@ -28,8 +28,7 @@ static int mtk_cg_bit_is_cleared(struct clk_hw *hw)
 		return 0;
 
 	regmap_read(cg->regmap, cg->sta_ofs, &val);
-	if(!strcmp("img_ipe", clk_hw_get_name(hw)))
-		pr_info("%s %x\n",  __func__, val);
+
 	val &= BIT(cg->bit);
 
 	return val == 0;
@@ -85,8 +84,6 @@ static int mtk_cg_enable(struct clk_hw *hw)
 	mtk_cg_clr_bit(hw);
 
 	mtk_clk_notify(NULL, NULL, clk_hw_get_name(hw), 0, 1, 0, CLK_EVT_CLK_TRACE);
-	if (!mtk_cg_bit_is_cleared(hw))
-		pr_notice("%s clk enable failed\n", clk_hw_get_name(hw));
 
 	return 0;
 }
@@ -111,8 +108,6 @@ static int mtk_cg_enable_inv(struct clk_hw *hw)
 	mtk_cg_set_bit(hw);
 
 	mtk_clk_notify(NULL, NULL, clk_hw_get_name(hw), 0, 1, 0, CLK_EVT_CLK_TRACE);
-	if (!mtk_cg_bit_is_set(hw))
-		pr_notice("%s clk enable inv failed\n", clk_hw_get_name(hw));
 
 	return 0;
 }
@@ -207,9 +202,6 @@ static int __cg_enable_hwv(struct clk_hw *hw, bool inv)
 	mtk_clk_notify(cg->regmap, cg->hwv_regmap, clk_hw_get_name(hw),
 			cg->sta_ofs, (cg->hwv_set_ofs / MTK_HWV_ID_OFS),
 			cg->bit, CLK_EVT_HWV_CG_CHK_PWR);
-
-	if(!strcmp("img_ipe", clk_hw_get_name(hw)))
-		mtk_cg_bit_is_cleared(hw);
 
 	if (cg->flags & CLK_EN_MM_INFRA_PWR)
 		mtk_clk_mminfra_hwv_power_ctrl(false);

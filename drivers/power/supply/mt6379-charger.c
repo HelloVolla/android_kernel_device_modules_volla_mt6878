@@ -1256,8 +1256,7 @@ static int mt6379_get_ipeak(struct mt6379_charger_data *cdata)
 	ibus = U_TO_M(ibus);
 	vsys = U_TO_M(vsys);
 
-	if (vbus != 0 && vsys != 0)
-		ipeak = (vbus * ibus) * 9 / (vsys * 10) + (vbus - vsys) * vsys / (2 * vbus);
+	ipeak = (vbus * ibus) * 9 / (vsys * 10) + (vbus - vsys) * vsys / (2 * vbus);
 
 	dev_info(cdata->dev, "%s ipeak = %d, ibus = %d, vbus = %d, vsys = %d\n",
 		 __func__, ipeak, ibus, vbus, vsys);
@@ -1436,9 +1435,9 @@ static int mt6379_do_icc_calibrate(struct mt6379_charger_data *cdata, int offset
 
 static int mt6379_icc_calibrate(struct mt6379_charger_data *cdata)
 {
-	u32 val = 0, cv = 0, vrec = 0, vbat = 0, chg_ocp = 0, icc = 0;
+	u32 val = 0, cv = 0, vrec = 0, vbat = 0, chg_ocp = 0, icc = 0, ibat = 0;
 	struct device *dev = cdata->dev;
-	int ret = 0, ipeak = 0, ibat = 0;
+	int ret = 0, ipeak = 0;
 
 	if (cdata->icc_calibrated)
 		return 0;

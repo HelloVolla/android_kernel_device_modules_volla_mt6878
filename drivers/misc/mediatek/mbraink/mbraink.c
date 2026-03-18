@@ -1600,10 +1600,6 @@ static int mbraink_init(void)
 	if (ret)
 		pr_notice("mbraink cpufreq tracer init failed.\n");
 
-	ret = mbraink_power_spm_info_init();
-	if (ret)
-		pr_notice("mbraink spm info init failed.\n");
-
 	return ret;
 }
 
@@ -1650,7 +1646,6 @@ static void mbraink_exit(void)
 	mbraink_gpu_deinit();
 	mbraink_audio_deinit();
 	mbraink_cpufreq_notify_exit();
-	mbraink_power_spm_info_deinit();
 }
 
 module_init(mbraink_init);

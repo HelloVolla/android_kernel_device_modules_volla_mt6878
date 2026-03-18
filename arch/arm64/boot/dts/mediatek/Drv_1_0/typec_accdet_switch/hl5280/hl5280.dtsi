@@ -1,0 +1,21 @@
+#include "../../drv_common.h"
+
+#if PRI_PLATFORM_MT6878
+#include "./mt6878/custom.h"
+#endif
+
+#if PRI_PLATFORM_MT6897
+#include "./mt6897/custom.h"
+#endif
+
+&I2C_NUM {
+	fsa4480_switch: fsa4480_switch {
+		compatible = "mediatek,hl5280-i2c";
+		reg = <I2C_ADDR>;
+		/* mic and gnd swap threshold in mV,
+		* only used when FSA4480_SWITCH_BY_ACCDET_ADC set
+		*/
+		mic_swap_thr = <200>;
+		status = "okay";
+	};
+};

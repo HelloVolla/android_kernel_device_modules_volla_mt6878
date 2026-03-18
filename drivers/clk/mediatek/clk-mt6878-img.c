@@ -158,7 +158,7 @@ static const struct mtk_gate img_clks[] = {
 	GATE_IMG0(CLK_IMG_WPE0, "img_wpe0",
 			"top_img1_ck"/* parent */, 4),
 	GATE_IMG0(CLK_IMG_IPE, "img_ipe",
-			"top_ipe_ck"/* parent */, 5),
+			"top_img1_ck"/* parent */, 5),
 	GATE_IMG0(CLK_IMG_WPE1, "img_wpe1",
 			"top_img1_ck"/* parent */, 6),
 	GATE_IMG0(CLK_IMG_WPE2, "img_wpe2",

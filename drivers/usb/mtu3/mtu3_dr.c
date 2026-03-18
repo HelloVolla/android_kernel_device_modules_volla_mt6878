@@ -583,15 +583,6 @@ static ssize_t role_mode_show(struct device *dev,
 }
 static DEVICE_ATTR_RO(role_mode);
 
-
-static void u3_lpm_capable_update(struct device *dev)
-{
-	struct ssusb_mtk *ssusb = dev_get_drvdata(dev);
-	struct mtu3 *mtu = ssusb->u3d;
-
-	mtu->g.lpm_capable = mtu->u3_lpm && (mtu->max_speed > USB_SPEED_HIGH);
-}
-
 static ssize_t max_speed_store(struct device *dev,
 				 struct device_attribute *attr,
 				 const char *buf, size_t count)
@@ -617,8 +608,6 @@ static ssize_t max_speed_store(struct device *dev,
 
 	mtu->max_speed = speed;
 	mtu->g.max_speed = speed;
-
-	u3_lpm_capable_update(dev);
 
 	return count;
 }
@@ -684,7 +673,7 @@ static ssize_t u3_lpm_store(struct device *dev,
 		return -EINVAL;
 
 	mtu->u3_lpm = enable ? 1 : 0;
-	u3_lpm_capable_update(dev);
+
 	return count;
 }
 

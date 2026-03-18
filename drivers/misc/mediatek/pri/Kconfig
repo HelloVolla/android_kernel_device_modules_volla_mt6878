@@ -1,0 +1,216 @@
+config PRI_DRIVER_SUPPORT
+	tristate "STMicroelectronics NFC driver solution"
+	help
+	  STMicroelectronics Near Field Communication controller support.
+	  It is the master switch of STMicroelectronics NFC controller drivers.
+	  If configures to be y, NFC_ST21NFC and NFC_ST54_SPI will be
+	  selected.
+config CAMERA_GC0301
+	tristate "STMicroelectronics NFC driver solution - NFC Controller Driver"
+	default n
+	help
+	  STMicroelectronics CAMERA_GC0301 Near Field Communication controller
+	  functionality. If configures to be n, means devices doesn't support
+	  NFC functionality.
+config PRI_LEPTON_FILR
+	tristate "priz lepton filr"
+	default n
+	help
+	  PRI_LEPTON_FILR. If configures to be n, means devices doesn't support
+	  FILR functionality.
+config PRI_HARDWARE_INFO
+	tristate "hardware_info"
+	default n
+	help
+	  hardware_info. If configures to be n, means devices doesn't support
+	  hardwareinfo functionality.
+
+#DRV added by chenjiaxi, add lpddr 8802 info (for ufs kernel-5.10), start
+config PRI_HARDWARE_LPDDR_INFO
+	tristate "hardware lpddr info"
+	default n
+	help
+	  hardware lpddr info. If configures to be n, means devices doesn't support
+	  hardware lpddr info functionality.
+#DRV added by chenjiaxi, add lpddr 8802 info (for ufs kernel-5.10), end
+
+config PRI_COMMON_NODE
+	tristate "common node"
+	default n
+	help
+	  common_node. If configures to be n, means devices doesn't support
+	  common_node functionality.
+
+config PRIZE_UNDERWATER_TOUCH_CONTROL
+  bool "UNDERWATER_TOUCH"
+  default n
+  help
+    Prize Underwater camera not report touch point
+
+#add by driver for pixel_manager 20231124 start
+config PRI_PIXEL_MANAGER
+	tristate "pixel manager enable"
+	default n
+	help
+	  Select m to enable pri pixel manager
+#add by driver for pixel_manager 20231124 end
+
+#add by driver for press 20211216 start
+config PRIZE_CS_PRESS
+	tristate "PRIZE_CS_PRESS Driver"
+	default n
+	help
+	  PRIZE_CS_PRESS.
+#add by driver for press 20211216 end
+
+#drv-add by shenwenbin for oled panel 20231213 start
+config PRI_OLED_NODE
+	tristate "oled node"
+	default n
+	help
+	  oled_node. If configures to be n, means devices doesn't support
+	  oled_node functionality.
+#drv-add by shenwenbin for oled panel 20231213 end
+
+config PRI_AW2016A
+	tristate "priz AW2016A"
+	default n
+	help
+	  PRI_FM. If configures to be n, means devices doesn't support
+	  AW2016A functionality.
+
+config LEDS_AW22127
+	tristate "priz AW22127"
+	default n
+	help
+	  PRI AW22127. If configures to be n, means devices doesn't support
+	  AW22127 functionality.
+
+#drv  add  by yaozhipeng 20241008 starrt 	  
+config LEDS_AW210XX
+	tristate "priz AW210XX"
+	default n
+	help
+	  PRI AW210XX. If configures to be n, means devices doesn't support
+	  AW210XX functionality.
+#drv  add  by yaozhipeng 20241008 end
+
+config PRI_FM_ANT_SWITCH
+	tristate "priz fm_ant"
+	default n
+	help
+	  PRI_FM. If configures to be n, means devices doesn't support
+	  fm_ant functionality.
+
+config PRI_ENDOSCOPE
+	tristate "endoscope"
+	bool "endoscope enable"
+	default n
+	help
+	  Select Y to enable pri endoscope enable
+	  
+config PRI_ENDOSCOPE_LED_TSET
+	tristate "endoscope test"
+	bool "endoscope enable test"
+	default n
+	help
+	  Select Y to enable pri endoscope enable test
+
+config DRV_ADC_GMS_DETECT
+	tristate "adc gms detect"
+	default n
+	help
+	  hardware_info. If configures to be n, means devices doesn't support
+	  hardwareinfo functionality.
+
+config DRV_ADC_PCBID_DETECT
+	tristate "adc pcbid detect"
+	default n
+	help
+	  pcbid_info. If configures to be n, means devices doesn't support
+	  pcbidinfo functionality.
+
+#DRV added by chenjiaxi, add miniscreen driver, start
+config DRV_MINISCREEN
+	tristate "DRV_MINISCREEN"
+	default n
+	help
+	  DRV_MINISCREEN
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/pri/miniscreen/Kconfig"
+#DRV added by chenjiaxi, add miniscreen driver, end  
+
+#drv added by chenjiaxi, drv dlpc343x driver, start
+config DRV_DLPC343X
+	tristate "drv dlpc343x driver"
+	default n
+	help
+	  DRV_DLPC343X.
+#drv added by chenjiaxi, drv dlpc343x driver, end
+
+#drv added by chenjiaxi, drv coolingfan driver, begin
+config DRV_COOLINGFAN
+	tristate "drv coolingfan driver"
+	default n
+	help
+	  DRV_COOLINGFAN.
+#drv added by chenjiaxi, drv coolingfan driver, end
+
+#drv added by chenjiaxi, aw8646 step driver, begin
+config AW8646_STEP
+	tristate "aw8646 step driver"
+	default n
+	help
+	  AW8646_STEP.
+	  
+config AW8646_DRV_LIMIT_BACK_ZERO
+	tristate "aw8646 drv limit back zero"
+	default n
+	help
+	  AW8646_DRV_LIMIT_BACK_ZERO.
+#drv added by chenjiaxi, aw8646 step driver, end
+
+config PRI_CAMPING_LIGHT
+	tristate "PRI_CAMPING_LIGHT Driver"
+	default n
+	help
+	  PRI_CAMPING_LIGHT.
+#drv  add  by lipengpeng 20240926 starrt 
+config PRI_AW36406
+	tristate "priz AW36406"
+	default n
+	help
+	  PRI_FM. If configures to be n, means devices doesn't support
+	  AW36406 functionality.
+#drv  add  by lipengpeng 20240926 starrt 
+
+#prize add by luoyu for flashlist Replace nodes 2020305 start
+config PRI_ODM
+	tristate "pri odm"
+	default n
+	help
+	  hardware flashlist info. If configures to be y, means devices doesn't support
+	  hardware flashlist info functionality.
+	  
+config CAMERA_TTM
+	tristate "STMicroelectronics TTM driver solution - TTM Controller Driver"
+	default n
+	help
+	  STMicroelectronics CAMERA_TTM Near Field Communication controller
+	  functionality. If configures to be n, means devices doesn't support
+	  functionality.
+	  	  
+#prize add by luoyu for flashlist Replace nodes 2020305 end
+#drv-add by huangxinglve for oled panel 20250620 start
+config PRIZE_OLED_NODE
+	tristate "oled node"
+	default n
+	help
+	  oled_node. If configures to be n, means devices doesn't support
+	  oled_node functionality.
+#drv-add by huangxinglve for oled panel 20250620 end
+
+source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/pri/aw95016/Kconfig"
+
+#drv-mod by shenwenbin for aw haptic 20250516 start
+#source "$(KCONFIG_EXT_PREFIX)drivers/misc/mediatek/pri/aw86937fcr_haptic_hv/Kconfig"
+#drv-mod by shenwenbin for aw haptic 20250516 end
