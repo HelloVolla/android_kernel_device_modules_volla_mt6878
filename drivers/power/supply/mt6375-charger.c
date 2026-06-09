@@ -1219,6 +1219,7 @@ static enum power_supply_property mt6375_chg_psy_properties[] = {
 	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
 	POWER_SUPPLY_PROP_INPUT_VOLTAGE_LIMIT,
 	POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT,
+	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_USB_TYPE,
 	POWER_SUPPLY_PROP_CURRENT_MAX,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX,
@@ -1238,6 +1239,7 @@ static int mt6375_chg_property_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_STATUS:
 	case POWER_SUPPLY_PROP_ONLINE:
 	case POWER_SUPPLY_PROP_ENERGY_EMPTY:
+	case POWER_SUPPLY_PROP_CHARGE_TYPE:
 		return 1;
 	default:
 		return 0;
@@ -1347,6 +1349,11 @@ static int mt6375_chg_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_ENERGY_EMPTY:
 		val->intval = ddata->vbat0_flag;
 		break;
+//add by wanwen,get charger IC BC1.2 check state 20260411 start
+	case POWER_SUPPLY_PROP_CHARGE_TYPE:
+		val->intval = ddata->psy_usb_type[ddata->active_idx];
+		break;
+//add by wanwen,get charger IC BC1.2 check state 20260411 end
 	default:
 		ret = -EINVAL;
 		break;
@@ -1394,6 +1401,35 @@ static int mt6375_chg_set_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_ENERGY_EMPTY:
 		ddata->vbat0_flag = val->intval;
 		break;
+//add by wanwen,Trigger charger IC BC1.2 check 20260411 start
+	case POWER_SUPPLY_PROP_CHARGE_TYPE:
+            if (val->intval == POWER_SUPPLY_USB_TYPE_UNKNOWN) {
+		queue_work(ddata->wq, &ddata->bc12_work);
+                dev_info(ddata->dev, "[%s] start bc12\n", __func__);
+            } else {
+                dev_info(ddata->dev, "[%s] update bc12 %d\n", __func__, val->intval);
+                switch (val->intval) {
+                    case POWER_SUPPLY_USB_TYPE_SDP:
+                        ddata->psy_desc.type = POWER_SUPPLY_TYPE_USB;
+                        ddata->psy_usb_type[ddata->active_idx] = POWER_SUPPLY_USB_TYPE_SDP;
+                        break;
+                    case POWER_SUPPLY_USB_TYPE_DCP:
+                        ddata->psy_desc.type = POWER_SUPPLY_TYPE_USB_DCP;
+                        ddata->psy_usb_type[ddata->active_idx] = POWER_SUPPLY_USB_TYPE_DCP;
+                        break;
+                    case POWER_SUPPLY_USB_TYPE_CDP:
+                        ddata->psy_desc.type = POWER_SUPPLY_TYPE_USB_CDP;
+                        ddata->psy_usb_type[ddata->active_idx] = POWER_SUPPLY_USB_TYPE_CDP;
+                        break;
+                    default:
+                        dev_info(ddata->dev, "[%s] reset chg_type\n", __func__);
+                        ddata->psy_usb_type[ddata->active_idx] = POWER_SUPPLY_USB_TYPE_UNKNOWN;
+                        break;
+                }
+                power_supply_changed(ddata->psy);
+            }
+            break;
+//add by wanwen,Trigger charger IC BC1.2 check 20260411 end
 	default:
 		ret = -EINVAL;
 		break;
@@ -1767,7 +1803,7 @@ static int mt6375_run_aicc(struct charger_device *chgdev, u32 *uA)
 	ret = mt6375_get_mivr_state(chgdev, &active);
 	if (ret < 0)
 		return ret;
-	if (!active) {
+	if (!active && (*uA >= 1000000)) {
 		mt_dbg(ddata->dev, "mivr loop is not active\n");
 		return 0;
 	}

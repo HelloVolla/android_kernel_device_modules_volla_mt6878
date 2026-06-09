@@ -19,6 +19,8 @@
 #include <linux/usb/role.h>
 #include <linux/workqueue.h>
 #include <linux/proc_fs.h>
+#include <linux/iio/consumer.h>
+#include <linux/iio/iio.h>
 
 #include "extcon-mtk-usb.h"
 
@@ -27,6 +29,9 @@
 #if IS_ENABLED(CONFIG_TCPC_CLASS)
 #include "tcpm.h"
 #endif
+
+int board_id = 0;
+EXPORT_SYMBOL_GPL(board_id);
 
 static const unsigned int usb_extcon_cable[] = {
 	EXTCON_USB,
@@ -666,6 +671,8 @@ static int mtk_usb_extcon_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct mtk_extcon_info *extcon;
+	static struct iio_channel *boardid_mv;
+	int auxadc_voltage,val;
 #if IS_ENABLED(CONFIG_TCPC_CLASS)
 	const char *tcpc_name;
 #endif
@@ -683,7 +690,25 @@ static int mtk_usb_extcon_probe(struct platform_device *pdev)
 		dev_err(dev, "failed to allocate extcon device\n");
 		return -ENOMEM;
 	}
-
+//add by wanwen,get board id 20260411 start
+	boardid_mv = devm_iio_channel_get(extcon->dev, "board-channel");
+	if (IS_ERR(boardid_mv)) {
+		dev_err(dev, "get channel name fail\n");
+	} else {
+		ret = iio_read_channel_raw(boardid_mv, &val);
+		if (ret < 0) {
+			iio_channel_release(boardid_mv);
+			dev_err(dev, "get channel raw fail\n");
+		} else {
+			ret = iio_read_channel_processed(boardid_mv ,&auxadc_voltage);
+			dev_err(dev, "return %d, adc mv is %d\n", ret, auxadc_voltage);
+			if ((auxadc_voltage > 280) && (auxadc_voltage < 320)) {
+				board_id = 1;
+				return -ENOMEM;
+			}
+		}
+	}
+//add by wanwen,get board id 20260411 end
 	ret = devm_extcon_dev_register(dev, extcon->edev);
 	if (ret < 0) {
 		dev_info(dev, "failed to register extcon device\n");

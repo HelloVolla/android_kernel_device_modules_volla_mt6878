@@ -297,6 +297,7 @@ mgk_64_k61_device_modules = [
     "drivers/misc/mediatek/eccci/hif/ccci_dpmaif.ko",
     "drivers/misc/mediatek/et/mtk_et.ko",
     "drivers/misc/mediatek/extcon/extcon-mtk-usb.ko",
+    "drivers/misc/mediatek/extcon/mtk-pogo-usb.ko",
     "drivers/misc/mediatek/flashlight/flashlight.ko",
     "drivers/misc/mediatek/flashlight/mtk-composite.ko",
     "drivers/misc/mediatek/flashlight/v4l2/ocp81378.ko",

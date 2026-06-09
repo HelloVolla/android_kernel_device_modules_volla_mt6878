@@ -56,7 +56,7 @@
 #include <linux/of_irq.h>
 #include <linux/of_address.h>
 #include <linux/reboot.h>
-
+#include <linux/of_gpio.h>
 #include "mtk_pe2.h"
 #include "mtk_charger_algorithm_class.h"
 
@@ -1005,9 +1005,9 @@ static int _pe2_start_algo(struct chg_alg_device *alg)
 	bool again = false;
 
 	pe2 = dev_get_drvdata(&alg->dev);
+
 	mutex_lock(&pe2->access_lock);
 	__pm_stay_awake(pe2->suspend_lock);
-
 	do {
 		pe2_info("%s state:%d %s %d\n", __func__,
 			pe2->state,
@@ -1021,6 +1021,12 @@ static int _pe2_start_algo(struct chg_alg_device *alg)
 			ret_value = ALG_INIT_FAIL;
 			break;
 		case PE2_HW_READY:
+//add by wanwen,stop the PE2 algorithm in pogo inserted state 20260411 start
+        		if (gpio_get_value(300) == 0) {
+                		pe2_info("PE2: POGO plug in\n");
+                		ret_value = ALG_NOT_READY;
+			}
+//add by wanwen,stop the PE2 algorithm in pogo inserted state 20260411 end
 			ret = __pe2_check_charger(alg);
 			if (ret == 0) {
 				pe2->state = PE2_RUN;
@@ -1058,6 +1064,7 @@ static int _pe2_start_algo(struct chg_alg_device *alg)
 			break;
 		}
 	} while (again == true);
+
 	__pm_relax(pe2->suspend_lock);
 	mutex_unlock(&pe2->access_lock);
 

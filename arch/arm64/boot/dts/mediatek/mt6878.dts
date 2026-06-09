@@ -10520,7 +10520,7 @@
 	};
 
 	extcon_usb: extcon-usb {
-		compatible = "mediatek,extcon-usb";
+		compatible = "mediatek,extcon-usb", "mediatek,pogo-usb";
 		vbus-supply = <&mt6375_otg_vbus>;
 		vbus-voltage = <5000000>;
 		vbus-current = <1800000>;
@@ -10528,6 +10528,11 @@
 		charger = <&mt6375_chg>;
 		tcpc = "type_c_port0";
 		mediatek,bypss-typec-sink = <1>;
+		io-channels = <&pmic_adc (ADC_PURES_OPEN_MASK | AUXADC_VIN3)>;
+                io-channel-names = "board-channel";
+		usb_sw = <&pio 34 0x0>; /* USB_SW */
+		pogo_otg_int = <&pio 4 0x0>;
+		pogo_otg = <&pio 38 0x0>;
 		mediatek,u2;
 		port {
 			usb_role: endpoint {

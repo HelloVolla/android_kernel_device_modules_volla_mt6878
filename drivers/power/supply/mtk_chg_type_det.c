@@ -22,6 +22,7 @@
 #define MTK_CTD_DRV_VERSION	"1.0.2_MTK"
 
 #define FAST_CHG_WATT		7500000 /* uW */
+extern int board_id;
 
 struct mci_notifier_block {
 	struct notifier_block nb;
@@ -262,7 +263,11 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 			dev_info(mci->dev,
 				 "%s Charger plug in, polarity = %d\n",
 				 __func__, noti->typec_state.polarity);
-			handle_typec_pd_attach(mci, idx, ATTACH_TYPE_TYPEC);
+//add by wanwen,distinguish charging notifications 20260411 start
+			if (board_id != 1) {
+				handle_typec_pd_attach(mci, idx, ATTACH_TYPE_TYPEC);
+			}
+//add by wanwen,distinguish charging notifications 20260411 end
 		} else if ((old_state == TYPEC_ATTACHED_SNK ||
 			    old_state == TYPEC_ATTACHED_NORP_SRC ||
 			    old_state == TYPEC_ATTACHED_CUSTOM_SRC ||
@@ -270,7 +275,11 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 			    old_state == TYPEC_ATTACHED_AUDIO) &&
 			    new_state == TYPEC_UNATTACHED) {
 			dev_info(mci->dev, "%s Charger plug out\n", __func__);
-			handle_typec_pd_attach(mci, idx, ATTACH_TYPE_NONE);
+//add by wanwen,distinguish charging notifications 20260411 start
+			if (board_id != 1) {
+				handle_typec_pd_attach(mci, idx, ATTACH_TYPE_NONE);
+			}
+//add by wanwen,distinguish charging notifications 20260411 end
 		}
 		break;
 	case TCP_NOTIFY_PR_SWAP:

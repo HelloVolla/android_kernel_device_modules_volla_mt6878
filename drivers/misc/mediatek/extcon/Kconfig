@@ -5,3 +5,11 @@ config EXTCON_MTK_USB
 	help
 	  Say Y here to enable extcon support for USB cable detection
 	  on the Mediatek PMIC.
+# drv add wanwen, add pogo pin, 20260324 start
+config MTK_POGO_USB
+	tristate "MediaTek MTK POGO USB Support"
+	select EXTCON
+	select USB_ROLE_SWITCH
+	help
+	  Say Y here to enable supoort for POGO USB.
+# drv add wanwen, add pogo pin, 20260324 end

@@ -6,6 +6,8 @@
 #include <linux/delay.h>
 #include <linux/kthread.h>
 #include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/of_gpio.h>
 
 #include "inc/tcpci.h"
 #include "inc/pd_policy_engine.h"
@@ -87,10 +89,21 @@ int pd_dpm_send_sink_caps(struct pd_port *pd_port)
 	struct pd_port_power_caps *snk_cap = &pd_port->local_snk_cap;
 
 #if CONFIG_USB_PD_REV30_PPS_SINK
-	if (pd_check_rev30(pd_port))
-		snk_cap->nr = pd_port->local_snk_cap_nr_pd30;
-	else
-		snk_cap->nr = pd_port->local_snk_cap_nr_pd20;
+//add by wanwen,limit Voltage 5v 20260411 start
+	if (pd_check_rev30(pd_port)) {
+		if (gpio_get_value(300) == 0) {
+			snk_cap->nr = 1;
+		} else {
+			snk_cap->nr = pd_port->local_snk_cap_nr_pd30;
+		}
+	} else {
+		if (gpio_get_value(300) == 0) {
+                        snk_cap->nr = 1;
+                } else {
+			snk_cap->nr = pd_port->local_snk_cap_nr_pd20;
+		}
+	}
+//add by wanwen,limit Voltage 5v 20260411 start
 #endif	/* CONFIG_USB_PD_REV30_PPS_SINK */
 
 	return pd_send_sop_data_msg(pd_port, PD_DATA_SINK_CAP,

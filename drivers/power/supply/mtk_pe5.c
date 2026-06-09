@@ -10,6 +10,7 @@
 #include <linux/module.h>
 #include <linux/notifier.h>
 #include <linux/of.h>
+#include <linux/of_gpio.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/wait.h>
@@ -3985,15 +3986,22 @@ static int pe50_start_algo(struct chg_alg_device *alg)
 	int ret = 0;
 	struct pe50_algo_info *info = chg_alg_dev_get_drvdata(alg);
 	struct pe50_algo_data *data = info->data;
-
+//add by wanwen,stop the PE5 algorithm in pogo inserted state 20260411 start
+	if (gpio_get_value(300) == 0) {
+		PE50_ERR("wanwen PE5: POGO plug in\n");
+		return ALG_NOT_READY;
+	}
+//add by wanwen,stop the PE5 algorithm in pogo inserted state 20260411 start
 	if (pe50_is_algo_running(alg))
 		return ALG_RUNNING;
+
 	mutex_lock(&data->lock);
 	PE50_DBG("++\n");
 	if (!data->inited || !data->ta_ready) {
 		ret = ALG_INIT_FAIL;
 		goto out;
 	}
+
 	pe50_hal_enable_sw_vbusovp(alg, false);
 	ret = pe50_start(info);
 	if (ret < 0) {
